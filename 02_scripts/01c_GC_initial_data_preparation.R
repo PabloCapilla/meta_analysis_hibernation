@@ -1,0 +1,130 @@
+###
+###
+#' Script to prepare data for hibernation meta-analysis
+#' 
+###
+###
+
+# Clear memory to make sure there are not files loaded that could cause problems
+rm(list=ls())
+
+
+
+##
+##### libraries #####
+##
+
+#renv::init(s)
+renv::restore()
+
+library(openxlsx)
+library(metafor)
+library(tidyverse)
+library(ggokabeito)
+
+#renv::snapshot()
+
+##
+##### data #####
+##
+
+##
+## study specific data
+##
+data  <- read.xlsx("./01_data/Hibernation_dataset_4_1_.xlsx",
+                   colNames=T,
+                   sheet = 3)
+head(data)
+summary(data)
+
+#####
+
+##
+##### Descriptive summary of final data and checks to catch errors, typos, etc #####
+##
+summary(data$Euthermia_M)
+summary(data$Euthermia_SD)
+
+table(data$Class)
+table(data$Thermoregulation)
+table(data$Biomarker_category)
+
+#####
+
+##
+##
+##### Complete SD if missing based on SE #####
+##
+##
+data$Euthermia_SD <- ifelse(is.na(data$Euthermia_SD), 
+                            data$Euthermia_SE * sqrt(data$Euthermia_N), 
+                            data$Euthermia_SD)
+
+data$Hib_SD <- ifelse(is.na(data$Hib_SD), 
+                      data$Hib_SE * sqrt(data$Hib_N), 
+                      data$Hib_SD)
+
+data$Arousal_SD <- ifelse(is.na(data$Arousal_SD), 
+                          data$Arousal_SE * sqrt(data$Arousal_N), 
+                          data$Arousal_SD)
+
+####
+
+
+##
+##### Calculating meta-analysis y variables #####
+##
+data$Hib_M
+data$Euthermia_M
+
+## SMD
+data <- as.data.frame(escalc(measure="SMDH", 
+                             n1i=Euthermia_N, 
+                             n2i=Hib_N, 
+                             m1i=Euthermia_M, 
+                             m2i=Hib_M, 
+                             sd1i= Euthermia_SD, 
+                             sd2i=Hib_SD,
+                             data=data,
+                             var.names=c("SMD","SMD.sv"), 
+                             add.measure=F,
+                             append=TRUE))
+
+## SMD
+data <- as.data.frame(escalc(measure="SMDH", 
+                             n1i=Euthermia_N, 
+                             n2i=Arousal_N, 
+                             m1i=Euthermia_M, 
+                             m2i=Arousal_M, 
+                             sd1i= Euthermia_SD, 
+                             sd2i=Arousal_SD,
+                             data=data,
+                             var.names=c("SMD_arousal","SMD.sv_arousal"), 
+                             add.measure=F,
+                             append=TRUE))
+
+## checking very high SMD values
+data %>% 
+  arrange(desc(SMD)) %>% 
+  head()
+
+
+##
+##
+##### Save full table #####
+saveRDS(object = data, file = "./01_data/processed_RDS_data_files/03_GC_metaanalysis_full_data.RDS")
+
+#####
+
+
+
+
+
+
+
+
+
+
+
+
+
