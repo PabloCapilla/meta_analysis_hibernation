@@ -1,0 +1,209 @@
+---
+title: "Meta-analysis physiological costs of estivation: Report 7 - OS"
+author: "Pablo Capilla-Lasheras"
+date: "2025-03-05"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+knit: (function(inputFile, encoding) {
+      out_dir <- "../05_reports";
+      rmarkdown::render(inputFile,
+                        encoding=encoding,
+                        output_dir=file.path(dirname(inputFile), out_dir))})
+---
+
+```{r setup, include = FALSE}
+
+# setup
+knitr::opts_chunk$set(
+  include = TRUE,
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+
+
+library(openxlsx)
+library(metafor)
+library(tidyverse)
+library(ggokabeito)
+library(orchaRd)
+library(rmarkdown)
+library(knitr)
+library(kableExtra)
+library(gtsummary)
+```
+
+This [R Markdown](http://rmarkdown.rstudio.com) Notebook contains the initial meta-analysis for the project 'physiological 'costs' of estivation (but this analysis is for estivation).
+
+## Dataset and calculation of effect sizes
+
+The dataset for this meta-analysis has been collected after a literature search by Pablo Burraco, Marko Prokic and Tamara Petrovic. It contains data on physiological effects of estivation in different systems. Here a quick snapshot of the first lines of the dataset:
+
+```{r}
+# dataset with raw data
+data  <- openxlsx::read.xlsx("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_estivation/meta_analysis_estivation/01_data/Estivation_dataset_2_0.xlsx",
+                             colNames=T,
+                             sheet = 1)
+
+paged_table(data, options = list(rows.print = 20))
+```
+
+As a summary of the *initial dataset*:
+
+-   Number of studies: `r length(unique(data$Study_ID))`
+-   Number of species: `r length(unique(data$Species))`
+
+For this initial meta-analysis, I am going to include all oxidative stress (OS) markers and calculate the standarised mean difference (g) as the effect size of analysis comparing **estivation** *versus* **euthermia**. Positive SMD values indicate higher OS values in *estivation* while negative SMD indicate lower OS values in estivation. This is a summary of the effect size calculation based on the dataset above:
+
+```{r}
+# ES data
+data <- readRDS("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_estivation/meta_analysis_estivation/01_data/processed_RDS_data_files/04_OS_metaanalysis_estivation_data.RDS")
+data$obsID <- 1:nrow(data)
+
+## data for SMD
+df_SMD <- data %>%
+  filter(!is.na(SMD)) %>% 
+  filter(!is.na(SMD.sv))
+```
+
+Summary of SMD effect size and number of observations included in the meta-analysis:
+
+```{r}
+summary(df_SMD$SMD)
+```
+
+-   Number of observation with non-missing SMD: `r nrow(df_SMD)`
+-   Number of studies in the dataset for analysis: `r length(unique(df_SMD$Study_ID))`
+-   Number of species in the dataset for analysis: `r length(unique(df_SMD$Species))`
+
+## Initial meta-analysis:
+
+This initial model contains only the intercept and five random effects to account for variation between between classes, families, species, between studies and within studies beyond sampling variance.
+
+```{r echo = TRUE, eval = FALSE}
+model_SMD <- rma.mv(yi = SMD, 
+                     V = SMD.sv, 
+                     mods = ~ 1, 
+                     random = list(~1|Study_ID,
+                                   ~1|Class,
+                                   ~1|Family,
+                                   ~1|Species,
+                                   ~1|obsID),
+                     data=df_SMD, 
+                     method="REML")
+```
+
+```{r}
+#saveRDS(object = model_SMD, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_estivation/meta_analysis_estivation/04_models/03_estivation/01a_metamodel_estivation_OS.RDS')
+model_SMD <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_estivation/meta_analysis_estivation/04_models/03_estivation/01a_metamodel_estivation_OS.RDS')
+summary(model_SMD)
+i2_SMD <- round(i2_ml(model_SMD), digits = 4) # heterogeneity random effects
+```
+
+Proportion of variation left after accounting for sampling variance and proportion accounted by each random effect:
+
+```{r}
+knitr::kable(x = data.frame(Variable = names(i2_SMD),
+                            i2_value_percentage = as.numeric(round(i2_SMD, digits = 3)))) %>% 
+  kable_styling(full_width = F)
+```
+
+### Plot of results of intercept-only model:
+
+```{r}
+overall_plot <- orchard_plot(object = model_SMD, 
+                             mod = 1, 
+                             group = 'Study_ID',
+                             trunk.size = 0.75,
+                             alpha = 0.2,
+                             cb = FALSE,
+                             xlab = "Standardised Mean Difference (g)",
+                             transfm = "none") +
+  scale_fill_okabe_ito() +
+  scale_color_okabe_ito() +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 16))
+
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_estivation/meta_analysis_estivation/03_plots/01_estivation/01a_overall_plot_estivation_OS.png", 
+       plot = overall_plot, 
+       device = "png", 
+       height = 90, 
+       width = 150, 
+       units = "mm")
+
+overall_plot
+```
+
+
+## Meta-analysis with all organisms but including different OS markers:
+
+Number of observations for each type:
+
+```{r}
+table(df_SMD$Biomarker_cat_2)
+```
+
+```{r, eval = FALSE}
+model_SMD_biomarker <- rma.mv(yi = SMD, 
+                                      V = SMD.sv, 
+                                      mods = ~
+                                        Biomarker_cat_2 - 
+                                       1,
+                                      random = list(~1|Study_ID,
+                                                    ~1|Class,
+                                                    ~1|Family,
+                                                    ~1|Species,
+                                                    ~1|obsID),
+                                      data=df_SMD, 
+                                      method="REML")
+
+
+summary(model_SMD_biomarker)
+
+```
+
+```{r}
+#saveRDS(object = model_SMD_biomarker, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/03_estivation/02_metareg_biomarker_estivation_OS.RDS')
+model_SMD_biomarker <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/03_estivation/02_metareg_biomarker_estivation_OS.RDS')
+summary(model_SMD_biomarker)
+```
+
+### Plot of results of biomarker meta-regression:
+
+```{r}
+biomarker_plot <- orchard_plot(object = model_SMD_biomarker, 
+                            mod = 'Biomarker_cat_2', 
+                            group = 'Study_ID',
+                            trunk.size = 0.75,
+                            alpha = 0.2,
+                            cb = FALSE,
+                             xlab = "Standardised Mean Difference (g)",
+                            transfm = "none") +
+  scale_fill_okabe_ito() +
+  scale_color_okabe_ito() +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 16))
+
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_estivation/meta_analysis_estivation/03_plots/01_estivation/02z_biomarker_OS.png", 
+       plot = biomarker_plot, 
+       device = "png", 
+       height = 90, 
+       width = 150, 
+       units = "mm")
+
+biomarker_plot
+```
+
+## Endotherms vs. ectotherms:
+
+Now, we investigate if the response to estivation varies across biomarkers of oxidative stress for endotherms and ectotherms. We include four markers:
+
+```{r}
+table(df_SMD$Biomarker_cat_2)
+```
+

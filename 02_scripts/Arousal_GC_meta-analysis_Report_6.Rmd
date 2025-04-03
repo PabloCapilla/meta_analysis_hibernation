@@ -44,7 +44,7 @@ The dataset for this meta-analysis has been collected after a literature search 
 
 ```{r}
 # dataset with raw data
-data  <- openxlsx::read.xlsx("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/01_data/Hibernation_dataset_4_1_.xlsx",
+data  <- openxlsx::read.xlsx("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/01_data/Hibernation_dataset_4_1_.xlsx",
                              colNames=T,
                              sheet = 3)
 
@@ -60,7 +60,7 @@ For this meta-analysis, I am going to include all glucocorticoid (GC) measures a
 
 ```{r}
 # ES data
-data <- readRDS("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/01_data/processed_RDS_data_files/03_GC_metaanalysis_full_data.RDS")
+data <- readRDS("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/01_data/processed_RDS_data_files/03_GC_metaanalysis_full_data.RDS")
 data$obsID <- 1:nrow(data)
 
 ## data for SMD
@@ -99,8 +99,8 @@ model_SMD <- rma.mv(yi = SMD_arousal,
 ```
 
 ```{r}
-saveRDS(object = model_SMD, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/02_arousal/01c_metamodel_hibernation_GC.RDS')
-model_SMD <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/02_arousal/01c_metamodel_hibernation_GC.RDS')
+saveRDS(object = model_SMD, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/01c_metamodel_hibernation_GC.RDS')
+model_SMD <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/01c_metamodel_hibernation_GC.RDS')
 summary(model_SMD)
 i2_SMD <- round(i2_ml(model_SMD), digits = 4) # heterogeneity random effects
 ```
@@ -130,7 +130,7 @@ overall_plot <- orchard_plot(object = model_SMD,
         axis.title = element_text(size = 16))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/03_plots/02_arousal/01c_overall_plot_hibernation_GC.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/01c_overall_plot_hibernation_GC.png", 
        plot = overall_plot, 
        device = "png", 
        height = 90, 
@@ -168,8 +168,8 @@ summary(model_SMD_thermoregulation)
 ```
 
 ```{r}
-saveRDS(object = model_SMD_thermoregulation, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/02_arousal/02c_metareg_thermoregulation_hibernation_GC.RDS')
-model_SMD_thermoregulation <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/02_arousal/02c_metareg_thermoregulation_hibernation_GC.RDS')
+saveRDS(object = model_SMD_thermoregulation, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/02c_metareg_thermoregulation_hibernation_GC.RDS')
+model_SMD_thermoregulation <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/02c_metareg_thermoregulation_hibernation_GC.RDS')
 summary(model_SMD_thermoregulation)
 ```
 
@@ -190,7 +190,7 @@ thermo_plot <- orchard_plot(object = model_SMD_thermoregulation,
         axis.title = element_text(size = 16))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/03_plots/02_arousal/02c_thermoregulation_plot_GC.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/02c_thermoregulation_plot_GC.png", 
        plot = thermo_plot, 
        device = "png", 
        height = 90, 

@@ -79,27 +79,31 @@ data$Euthermia_M
 
 ## SMD
 data <- as.data.frame(escalc(measure="SMDH", 
-                             n1i=Euthermia_N, 
-                             n2i=Hib_N, 
-                             m1i=Euthermia_M, 
-                             m2i=Hib_M, 
-                             sd1i= Euthermia_SD, 
-                             sd2i=Hib_SD,
+                             n1i=Hib_N, 
+                             m1i=Hib_M, 
+                             sd1i=Hib_SD,
+                             
+                             n2i=Euthermia_N, 
+                             m2i=Euthermia_M, 
+                             sd2i= Euthermia_SD, 
+                             
                              data=data,
-                             var.names=c("SMD","SMD.sv"), 
+                             var.names=c("SMDH","SMDH.sv"), 
                              add.measure=F,
                              append=TRUE))
 
 ## SMD
 data <- as.data.frame(escalc(measure="SMDH", 
-                             n1i=Euthermia_N, 
-                             n2i=Arousal_N, 
-                             m1i=Euthermia_M, 
-                             m2i=Arousal_M, 
-                             sd1i= Euthermia_SD, 
-                             sd2i=Arousal_SD,
+                             n1i=Arousal_N, 
+                             m1i=Arousal_M, 
+                             sd1i=Arousal_SD,
+                             
+                             n2i=Euthermia_N, 
+                             m2i=Euthermia_M, 
+                             sd2i= Euthermia_SD, 
+                             
                              data=data,
-                             var.names=c("SMD_arousal","SMD.sv_arousal"), 
+                             var.names=c("SMDH_arousal","SMDH.sv_arousal"), 
                              add.measure=F,
                              append=TRUE))
 
@@ -108,6 +112,12 @@ data %>%
   arrange(desc(SMD)) %>% 
   head()
 
+df_check <- data %>% 
+  filter(!is.na(SMDH)) %>% 
+  arrange(desc(SMDH)) %>%
+  filter(SMDH < -4 | SMDH > 4)
+
+write.csv(x = df_check, file = './01_data/data_check/IM_papers_to_check.csv')
 
 ##
 ##

@@ -14,15 +14,10 @@ rm(list=ls())
 ##### libraries #####
 ##
 
-#renv::init(s)
-renv::restore()
-
 library(openxlsx)
 library(metafor)
 library(tidyverse)
 library(ggokabeito)
-
-#renv::snapshot()
 
 ##
 ##### data #####
@@ -77,36 +72,47 @@ data$Arousal_SD <- ifelse(is.na(data$Arousal_SD),
 ##
 
 ## SMD
-data <- as.data.frame(escalc(measure="SMDH", 
-                             n1i=Euthermia_N, 
-                             n2i=Hib_N, 
-                             m1i=Euthermia_M, 
-                             m2i=Hib_M, 
-                             sd1i= Euthermia_SD, 
-                             sd2i=Hib_SD,
+data <- as.data.frame(escalc(measure="SMDH",
+                             n1i=Hib_N, 
+                             m1i=Hib_M, 
+                             sd1i=Hib_SD,
+                             
+                             n2i=Euthermia_N,
+                             m2i=Euthermia_M, 
+                             sd2i= Euthermia_SD, 
+                             
                              data=data,
-                             var.names=c("SMD","SMD.sv"), 
+                             var.names=c("SMDH","SMDH.sv"), 
                              add.measure=F,
                              append=TRUE))
 
 ## SMD
 data <- as.data.frame(escalc(measure="SMDH", 
-                             n1i=Euthermia_N, 
-                             n2i=Arousal_N, 
-                             m1i=Euthermia_M, 
-                             m2i=Arousal_M, 
-                             sd1i= Euthermia_SD, 
-                             sd2i=Arousal_SD,
+                             n1i=Arousal_N, 
+                             m1i=Arousal_M, 
+                             sd1i=Arousal_SD,
+                             
+                             n2i=Euthermia_N, 
+                             m2i=Euthermia_M, 
+                             sd2i= Euthermia_SD, 
                              data=data,
-                             var.names=c("SMD_arousal","SMD.sv_arousal"), 
+                             var.names=c("SMDH_arousal","SMDH.sv_arousal"), 
                              add.measure=F,
                              append=TRUE))
 
+
 ## checking very high SMD values
 data %>% 
-  arrange(desc(SMD)) %>% 
+  arrange(desc(SMDH)) %>% 
   head()
 
+
+df_check <- data %>% 
+  filter(!is.na(SMDH)) %>% 
+  arrange(desc(SMDH)) %>%
+  filter(SMDH < -4 | SMDH > 4)
+
+write.csv(x = df_check, file = './01_data/data_check/OS_papers_to_check.csv')
 
 ##
 ##

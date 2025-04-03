@@ -44,7 +44,7 @@ The dataset for this meta-analysis has been collected after a literature search 
 
 ```{r}
 # dataset with raw data
-data  <- openxlsx::read.xlsx("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/01_data/Hibernation_dataset_4_1_.xlsx",
+data  <- openxlsx::read.xlsx("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/01_data/Hibernation_dataset_4_1_.xlsx",
                              colNames=T,
                              sheet = 2)
 
@@ -60,7 +60,7 @@ For this meta-analysis, I am going to include all immune (IM) markers and calcul
 
 ```{r}
 # ES data
-data <- readRDS("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/01_data/processed_RDS_data_files/02_IM_metaanalysis_full_data.RDS")
+data <- readRDS("C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/01_data/processed_RDS_data_files/02_IM_metaanalysis_full_data.RDS")
 data$obsID <- 1:nrow(data)
 
 ## data for SMD
@@ -97,8 +97,8 @@ model_SMD <- rma.mv(yi = SMD,
 ```
 
 ```{r}
-#saveRDS(object = model_SMD, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/01_hibernation/01b_metamodel_hibernation_IM.RDS')
-model_SMD <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/01_hibernation/01b_metamodel_hibernation_IM.RDS')
+#saveRDS(object = model_SMD, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/01b_metamodel_hibernation_IM.RDS')
+model_SMD <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/01b_metamodel_hibernation_IM.RDS')
 summary(model_SMD)
 i2_SMD <- round(i2_ml(model_SMD), digits = 4) # heterogeneity random effects
 ```
@@ -128,7 +128,7 @@ overall_plot <- orchard_plot(object = model_SMD,
         axis.title = element_text(size = 16))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/03_plots/01_hibernation/01b_overall_plot_hibernation_IM.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/01_hibernation/01b_overall_plot_hibernation_IM.png", 
        plot = overall_plot, 
        device = "png", 
        height = 90, 
@@ -137,6 +137,68 @@ ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8
 
 overall_plot
 ```
+
+## Meta-analysis with all organisms but including different IM markers:
+
+Number of observations for each type:
+
+```{r}
+table(df_SMD$Biomarker_cat_2)
+```
+
+```{r, eval = FALSE}
+model_SMD_biomarker <- rma.mv(yi = SMD, 
+                                      V = SMD.sv, 
+                                      mods = ~
+                                        Biomarker_category - 
+                                       1,
+                                      random = list(~1|Study_ID,
+                                                    ~1|Class,
+                                                    ~1|Family,
+                                                    ~1|Species,
+                                                    ~1|obsID),
+                                      data=df_SMD, 
+                                      method="REML")
+
+
+summary(model_SMD_biomarker)
+
+```
+
+```{r}
+#saveRDS(object = model_SMD_biomarker, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/02z_metareg_biomarker_hibernation_IM.RDS')
+model_SMD_biomarker <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/02z_metareg_biomarker_hibernation_IM.RDS')
+summary(model_SMD_biomarker)
+```
+
+### Plot of results of biomarker meta-regression:
+
+```{r}
+biomarker_plot <- orchard_plot(object = model_SMD_biomarker, 
+                            mod = 'Biomarker_category', 
+                            group = 'Study_ID',
+                            trunk.size = 0.75,
+                            alpha = 0.2,
+                            cb = FALSE,
+                             xlab = "Standardised Mean Difference (g)",
+                            transfm = "none") +
+  scale_fill_okabe_ito() +
+  scale_color_okabe_ito() +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 16))
+
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/01_hibernation/02z_biomarker_plot_IM.png", 
+       plot = biomarker_plot, 
+       device = "png", 
+       height = 90, 
+       width = 150, 
+       units = "mm")
+
+biomarker_plot
+```
+
+
 
 ## Meta-analysis including thermoregulation type as a moderator:
 
@@ -166,8 +228,8 @@ summary(model_SMD_thermoregulation)
 ```
 
 ```{r}
-#saveRDS(object = model_SMD_thermoregulation, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/01_hibernation/02b_metareg_thermoregulation_hibernation_IM.RDS')
-model_SMD_thermoregulation <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/01_hibernation/02b_metareg_thermoregulation_hibernation_IM.RDS')
+#saveRDS(object = model_SMD_thermoregulation, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/02b_metareg_thermoregulation_hibernation_IM.RDS')
+model_SMD_thermoregulation <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/02b_metareg_thermoregulation_hibernation_IM.RDS')
 summary(model_SMD_thermoregulation)
 ```
 
@@ -188,7 +250,7 @@ thermo_plot <- orchard_plot(object = model_SMD_thermoregulation,
         axis.title = element_text(size = 16))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/03_plots/01_hibernation/02b_thermoregulation_plot_IM.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/01_hibernation/02b_thermoregulation_plot_IM.png", 
        plot = thermo_plot, 
        device = "png", 
        height = 90, 
@@ -239,8 +301,8 @@ summary(model_SMD_endo)
 ```
 
 ```{r}
-#saveRDS(object = model_SMD_endo, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/01_hibernation/03b_metareg_hibernation_endo_IM.RDS')
-model_SMD_endo <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/01_hibernation/03b_metareg_hibernation_endo_IM.RDS')
+#saveRDS(object = model_SMD_endo, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/03b_metareg_hibernation_endo_IM.RDS')
+model_SMD_endo <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/03b_metareg_hibernation_endo_IM.RDS')
 summary(model_SMD_endo)
 ```
 
@@ -259,7 +321,7 @@ endo_plot <- orchard_plot(object = model_SMD_endo,
         axis.title = element_text(size = 16))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/03_plots/01_hibernation/03b_endo_plot_IM.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/01_hibernation/03b_endo_plot_IM.png", 
        plot = endo_plot, 
        device = "png", 
        height = 90, 
@@ -301,8 +363,8 @@ summary(model_SMD_ecto)
 ```
 
 ```{r}
-#saveRDS(object = model_SMD_ecto, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/01_hibernation/04b_metareg_ecto_hibernation_IM.RDS')
-model_SMD_ecto <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/04_models/01_hibernation/04b_metareg_ecto_hibernation_IM.RDS')
+#saveRDS(object = model_SMD_ecto, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/04b_metareg_ecto_hibernation_IM.RDS')
+model_SMD_ecto <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/01_hibernation/04b_metareg_ecto_hibernation_IM.RDS')
 summary(model_SMD_ecto)
 ```
 
@@ -321,7 +383,7 @@ ecto_plot <- orchard_plot(object = model_SMD_ecto,
         axis.title = element_text(size = 16))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/03_plots/01_hibernation/04b_ecto_plot_IM.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/01_hibernation/04b_ecto_plot_IM.png", 
        plot = ecto_plot, 
        device = "png", 
        height = 90, 
