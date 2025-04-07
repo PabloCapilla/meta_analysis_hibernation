@@ -1,7 +1,7 @@
 ---
 title: "Meta-analysis physiological costs of hibernation: Report 4 - Arousal OS"
 author: "Pablo Capilla-Lasheras"
-date: "2025-01-29"
+date: "2025-04-07"
 output:
   html_document:
     df_print: paged
@@ -55,7 +55,7 @@ As a summary of the *initial dataset*:
 -   Number of studies: `r length(unique(data$Study_ID))`
 -   Number of species: `r length(unique(data$Species))`
 
-For this initial meta-analysis, I am going to include all oxidative stress (OS) markers and calculate the standarised mean difference (g) as the effect size of analysis comparing **arousal** *versus* **euthermia**. Positive SMD values indicate higher OS values in *arousal* while negative SMD indicate lower OS values in *arousal* This is a summary of the effect size calculation based on the dataset above:
+For this initial meta-analysis, I am going to include all oxidative stress (OS) markers and calculate the standarised mean difference (g) as the effect size of analysis comparing **arousal** *versus* **euthermia**. Positive SMD values indicate higher OS values in *arousal* while negative SMD indicate lower OS values in *arousal*. This is a summary of the effect size calculation based on the dataset above:
 
 ```{r}
 # ES data
@@ -64,14 +64,15 @@ data$obsID <- 1:nrow(data)
 
 ## data for SMD
 df_SMD <- data %>%
-  filter(!is.na(SMD_arousal)) %>% 
-  filter(!is.na(SMD.sv_arousal))
+  filter(!is.na(SMDH_arousal)) %>% 
+  filter(!is.na(SMDH.sv_arousal)) %>% 
+  filter(SMDH_arousal < 30) # need to report that this outlier was removed
 ```
 
 Summary of SMD effect size and number of observations included in the meta-analysis:
 
 ```{r}
-summary(df_SMD$SMD_arousal)
+summary(df_SMD$SMDH_arousal)
 ```
 
 -   Number of observation with non-missing SMD: `r nrow(df_SMD)`
@@ -82,22 +83,22 @@ summary(df_SMD$SMD_arousal)
 
 This initial model contains only the intercept and five random effects to account for variation between between classes, families, species, between studies and within studies beyond sampling variance.
 
-```{r echo = TRUE, eval = FALSE}
-model_SMD <- rma.mv(yi = SMD_arousal, 
-                     V = SMD.sv_arousal, 
-                     mods = ~ 1, 
-                     random = list(~1|Study_ID,
-                                   ~1|Class,
-                                   ~1|Family,
-                                   ~1|Species,
-                                   ~1|obsID),
-                     data=df_SMD, 
-                     method="REML")
+```{r echo = TRUE, eval = TRUE}
+model_SMD <- rma.mv(yi = SMDH_arousal, 
+                    V = SMDH.sv_arousal, 
+                    mods = ~ 1, 
+                    random = list(~1|Study_ID,
+                                  ~1|Class,
+                                  ~1|Family,
+                                  ~1|Species,
+                                  ~1|obsID),
+                    data=df_SMD, 
+                    method="REML")
 ```
 
 ```{r}
-#saveRDS(object = model_SMD, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/01_metamodel_arousal.RDS')
-model_SMD <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/01a_metamodel_arousal_OS.RDS')
+saveRDS(object = model_SMD, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/01d_metamodel_arousal_OS.RDS')
+model_SMD <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/01d_metamodel_arousal_OS.RDS')
 summary(model_SMD)
 i2_SMD <- round(i2_ml(model_SMD), digits = 4) # heterogeneity random effects
 ```
@@ -116,26 +117,74 @@ knitr::kable(x = data.frame(Variable = names(i2_SMD),
 overall_plot <- orchard_plot(object = model_SMD, 
                              mod = 1, 
                              group = 'Study_ID',
-                             trunk.size = 0.75,
+                             trunk.size = 1,
                              alpha = 0.2,
                              cb = FALSE,
-                             xlab = "Standardised Mean Difference (g)",
+                             xlab = "Standardised Mean Difference",
                              transfm = "none") +
   scale_fill_okabe_ito() +
   scale_color_okabe_ito() +
   theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 16))
+        axis.text.y = element_text(size = 12, angle = 0), 
+        axis.title = element_text(size = 16)) +
+  scale_y_continuous(limits = c(-5, 15), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/01a_overall_arousal_OS.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/01d_overall_arousal_OS.png", 
        plot = overall_plot, 
        device = "png", 
-       height = 90, 
-       width = 150, 
+       height = 110, 
+       width = 185, 
        units = "mm")
 
 overall_plot
 ```
+
+### Publication bias: small-study effects
+
+```{r}
+df_SMD$inv_eff_ss <- (1/df_SMD$Arousal_N) + (1/df_SMD$Euthermia_N)
+
+
+model_SMD_pb <- rma.mv(yi = SMDH_arousal, 
+                       V = SMDH.sv_arousal, 
+                       mods = ~ 1 + sqrt(inv_eff_ss), 
+                       random = list(~1|Study_ID,
+                                     ~1|Class,
+                                     ~1|Family,
+                                     ~1|Species,
+                                     ~1|obsID),
+                       data=df_SMD, 
+                       method="REML")
+
+summary(model_SMD_pb)
+r2_ml(model_SMD_pb)
+
+saveRDS(object = model_SMD_pb, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/06d_pb_metamodel_arousal_OS.RDS')
+model_SMD_pb <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/06d_pb_metamodel_arousal_OS.RDS')
+```
+
+### Publication bias: time-lag effects
+
+```{r}
+model_SMD_tl <- rma.mv(yi = SMDH_arousal, 
+                       V = SMDH.sv_arousal, 
+                       mods = ~ 1 + scale(Year), 
+                       random = list(~1|Study_ID,
+                                     ~1|Class,
+                                     ~1|Family,
+                                     ~1|Species,
+                                     ~1|obsID),
+                       data=df_SMD, 
+                       method="REML")
+
+summary(model_SMD_tl)
+r2_ml(model_SMD_tl)
+
+saveRDS(object = model_SMD_tl, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/07d_timelag_metamodel_arousal_OS.RDS')
+model_SMD_tl <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/07d_timelag_metamodel_arousal_OS.RDS')
+```
+
 
 ## Meta-analysis with all organisms but including different OS markers:
 
@@ -145,19 +194,19 @@ Number of observations for each type:
 table(df_SMD$Biomarker_cat_2)
 ```
 
-```{r, eval = FALSE}
-model_SMD_biomarker <- rma.mv(yi = SMD, 
-                                      V = SMD.sv, 
-                                      mods = ~
-                                        Biomarker_cat_2 - 
-                                       1,
-                                      random = list(~1|Study_ID,
-                                                    ~1|Class,
-                                                    ~1|Family,
-                                                    ~1|Species,
-                                                    ~1|obsID),
-                                      data=df_SMD, 
-                                      method="REML")
+```{r, eval = TRUE}
+model_SMD_biomarker <- rma.mv(yi = SMDH_arousal, 
+                              V = SMDH.sv_arousal, 
+                              mods = ~
+                                Biomarker_cat_2 - 
+                                1,
+                              random = list(~1|Study_ID,
+                                            ~1|Class,
+                                            ~1|Family,
+                                            ~1|Species,
+                                            ~1|obsID),
+                              data=df_SMD, 
+                              method="REML")
 
 
 summary(model_SMD_biomarker)
@@ -165,8 +214,8 @@ summary(model_SMD_biomarker)
 ```
 
 ```{r}
-#saveRDS(object = model_SMD_biomarker, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/02z_metareg_biomarker_arousal_OS.RDS')
-model_SMD_biomarker <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/02z_metareg_biomarker_arousal_OS.RDS')
+saveRDS(object = model_SMD_biomarker, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/02d_metareg_biomarker_arousal_OS.RDS')
+model_SMD_biomarker <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/02d_metareg_biomarker_arousal_OS.RDS')
 summary(model_SMD_biomarker)
 ```
 
@@ -174,24 +223,27 @@ summary(model_SMD_biomarker)
 
 ```{r}
 biomarker_plot <- orchard_plot(object = model_SMD_biomarker, 
-                            mod = 'Biomarker_cat_2', 
-                            group = 'Study_ID',
-                            trunk.size = 0.75,
-                            alpha = 0.2,
-                            cb = FALSE,
-                             xlab = "Standardised Mean Difference (g)",
-                            transfm = "none") +
+                               mod = 'Biomarker_cat_2', 
+                               group = 'Study_ID',
+                               trunk.size = 1,
+                               alpha = 0.2,
+                               cb = FALSE,
+                               xlab = "Standardised Mean Difference",
+                               transfm = "none") +
   scale_fill_okabe_ito() +
   scale_color_okabe_ito() +
   theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 16))
+        axis.text.y = element_text(size = 12, angle = 0), 
+        axis.title = element_text(size = 16)) +
+  scale_y_continuous(limits = c(-5, 15), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal//02z_biomarker_OS.png", 
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/02d_biomarker_OS.png", 
        plot = biomarker_plot, 
        device = "png", 
-       height = 90, 
-       width = 150, 
+       height = 110, 
+       width = 185, 
        units = "mm")
 
 biomarker_plot
@@ -206,20 +258,20 @@ Number of observations for each type:
 table(df_SMD$Thermoregulation)
 ```
 
-```{r, eval = FALSE}
-model_SMD_thermoregulation <- rma.mv(yi = SMD_arousal, 
-                                      V = SMD.sv_arousal, 
-                                      mods = ~
-                                        Thermoregulation -
-                                        1, 
-                                      random = list(~1|Study_ID,
-                                                    ~1|Class,
-                                                    ~1|Family,
-                                                    ~1|Species,
-                                                    ~1|obsID),
-                                      data=df_SMD, 
-                                      control=list(optimizer="BFGS"),
-                                      method="REML")
+```{r, eval = TRUE}
+model_SMD_thermoregulation <- rma.mv(yi = SMDH_arousal, 
+                                     V = SMDH.sv_arousal, 
+                                     mods = ~
+                                       Thermoregulation -
+                                       1, 
+                                     random = list(~1|Study_ID,
+                                                   ~1|Class,
+                                                   ~1|Family,
+                                                   ~1|Species,
+                                                   ~1|obsID),
+                                     data=df_SMD, 
+                                     control=list(optimizer="BFGS"),
+                                     method="REML")
 
 
 summary(model_SMD_thermoregulation)
@@ -227,8 +279,8 @@ summary(model_SMD_thermoregulation)
 ```
 
 ```{r}
-#saveRDS(object = model_SMD_thermoregulation, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/02_metareg_thermoregulation_arousal.RDS')
-model_SMD_thermoregulation <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/02a_metareg_thermoregulation_arousal_OS.RDS')
+saveRDS(object = model_SMD_thermoregulation, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/03d_metareg_thermoregulation_arousal_OS.RDS')
+model_SMD_thermoregulation <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/03d_metareg_thermoregulation_arousal_OS.RDS')
 summary(model_SMD_thermoregulation)
 ```
 
@@ -238,22 +290,24 @@ summary(model_SMD_thermoregulation)
 thermo_plot <- orchard_plot(object = model_SMD_thermoregulation, 
                             mod = 'Thermoregulation', 
                             group = 'Study_ID',
-                            trunk.size = 0.75,
+                            trunk.size = 1,
                             alpha = 0.2,
                             cb = FALSE,
-                             xlab = "Standardised Mean Difference (g)",
+                            xlab = "Standardised Mean Difference",
                             transfm = "none") +
   scale_fill_okabe_ito() +
   scale_color_okabe_ito() +
   theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 16))
+        axis.text.y = element_text(size = 12, angle = 0), 
+        axis.title = element_text(size = 16)) +
+  scale_y_continuous(limits = c(-5, 15), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/02a_thermoregulation_plot_OS.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/03d_thermoregulation_plot_arousal_OS.png", 
        plot = thermo_plot, 
        device = "png", 
-       height = 90, 
-       width = 150, 
+       height = 110, 
+       width = 185, 
        units = "mm")
 
 thermo_plot
@@ -272,9 +326,10 @@ table(df_SMD$Biomarker_cat_2)
 ```{r}
 ## data for SMD
 df_SMD_endo <- data %>%
-  filter(!is.na(SMD_arousal)) %>% 
-  filter(!is.na(SMD.sv_arousal)) %>% 
-  filter(Thermoregulation == 'Endothermic')
+  filter(!is.na(SMDH_arousal)) %>% 
+  filter(!is.na(SMDH.sv_arousal)) %>% 
+  filter(Thermoregulation == 'Endothermic')  %>% 
+  filter(SMDH_arousal < 30)
 
 ```
 
@@ -282,26 +337,26 @@ df_SMD_endo <- data %>%
 -   Number of studies in the dataset for analysis: `r length(unique(df_SMD_endo$Study_ID))`
 -   Number of species in the dataset for analysis: `r length(unique(df_SMD_endo$Species))`
 
-```{r, eval = FALSE}
-model_SMD_endo <- rma.mv(yi = SMD_arousal, 
-                          V = SMD.sv_arousal, 
-                          mods = ~
-                            Biomarker_cat_2 -
-                            1, 
-                          random = list(~1|Study_ID,
-                                        ~1|Family,
-                                        ~1|Species,
-                                        ~1|obsID),
-                          data=df_SMD_endo, 
-                          method="REML")
+```{r, eval = TRUE}
+model_SMD_endo <- rma.mv(yi = SMDH_arousal, 
+                         V = SMDH.sv_arousal, 
+                         mods = ~
+                           Biomarker_cat_2 -
+                           1, 
+                         random = list(~1|Study_ID,
+                                       ~1|Family,
+                                       ~1|Species,
+                                       ~1|obsID),
+                         data=df_SMD_endo, 
+                         method="REML")
 
 
 summary(model_SMD_endo)
 ```
 
 ```{r}
-#saveRDS(object = model_SMD_endo, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/03a_metareg_arousal_endo_OS.RDS')
-model_SMD_endo <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/03a_metareg_arousal_endo_OS.RDS')
+saveRDS(object = model_SMD_endo, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/04d_metareg_arousal_endo_OS.RDS')
+model_SMD_endo <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/04d_metareg_arousal_endo_OS.RDS')
 summary(model_SMD_endo)
 ```
 
@@ -309,18 +364,20 @@ summary(model_SMD_endo)
 endo_plot <- orchard_plot(object = model_SMD_endo, 
                           mod = 'Biomarker_cat_2', 
                           group = 'Study_ID',
-                          trunk.size = 0.75,
+                          trunk.size = 1,
                           alpha = 0.2,
                           cb = FALSE,
-                             xlab = "Standardised Mean Difference (g)",
+                          xlab = "Standardised Mean Difference",
                           transfm = "none") +
   scale_fill_okabe_ito() +
   scale_color_okabe_ito() +
   theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 16))
+        axis.text.y = element_text(size = 12, angle = 0), 
+        axis.title = element_text(size = 16)) +
+  scale_y_continuous(limits = c(-5, 15), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/03a_endo_plot_OS.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/04d_endo_plot_arousal_OS.png", 
        plot = endo_plot, 
        device = "png", 
        height = 90, 
@@ -335,9 +392,10 @@ endo_plot
 ```{r}
 ## data for SMD
 df_SMD_ecto <- data %>%
-  filter(!is.na(SMD_arousal)) %>% 
-  filter(!is.na(SMD.sv_arousal)) %>% 
-  filter(Thermoregulation == 'Ectothermic')
+  filter(!is.na(SMDH_arousal)) %>% 
+  filter(!is.na(SMDH.sv_arousal)) %>% 
+  filter(Thermoregulation == 'Ectothermic') %>% 
+  filter(SMDH_arousal < 30)
 
 ```
 
@@ -345,25 +403,25 @@ df_SMD_ecto <- data %>%
 -   Number of studies in the dataset for analysis: `r length(unique(df_SMD_ecto$Study_ID))`
 -   Number of species in the dataset for analysis: `r length(unique(df_SMD_ecto$Species))`
 
-```{r, eval = FALSE}
-model_SMD_ecto <- rma.mv(yi = SMD_arousal, 
-                          V = SMD.sv_arousal, 
-                          mods = ~
-                            Biomarker_cat_2 -
-                            1, 
-                          random = list(~1|Study_ID,
-                                        ~1|Class,
-                                        ~1|Family,
-                                        ~1|Species,
-                                        ~1|obsID),
-                          data=df_SMD_ecto, 
-                          method="REML")
+```{r, eval = TRUE}
+model_SMD_ecto <- rma.mv(yi = SMDH_arousal, 
+                         V = SMDH.sv_arousal, 
+                         mods = ~
+                           Biomarker_cat_2 -
+                           1, 
+                         random = list(~1|Study_ID,
+                                       ~1|Class,
+                                       ~1|Family,
+                                       ~1|Species,
+                                       ~1|obsID),
+                         data=df_SMD_ecto, 
+                         method="REML")
 summary(model_SMD_ecto)
 ```
 
 ```{r}
-#saveRDS(object = model_SMD_ecto, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernationmeta_analysis_hibernation/04_models/02_arousal/04_metareg_ecto_arousal.RDS')
-model_SMD_ecto <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/04a_metareg_ecto_arousal_OS.RDS')
+saveRDS(object = model_SMD_ecto, file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/05d_metareg_ecto_arousal_OS.RDS')
+model_SMD_ecto <- readRDS(file = 'C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/04_models/02_arousal/05d_metareg_ecto_arousal_OS.RDS')
 summary(model_SMD_ecto)
 ```
 
@@ -371,22 +429,24 @@ summary(model_SMD_ecto)
 ecto_plot <- orchard_plot(object = model_SMD_ecto, 
                           mod = 'Biomarker_cat_2', 
                           group = 'Study_ID',
-                          trunk.size = 0.75,
+                          trunk.size = 1,
                           alpha = 0.2,
                           cb = FALSE,
-                             xlab = "Standardised Mean Difference (g)",
+                          xlab = "Standardised Mean Difference",
                           transfm = "none") +
   scale_fill_okabe_ito() +
   scale_color_okabe_ito() +
   theme(axis.text = element_text(size = 12),
-        axis.title = element_text(size = 16))
+        axis.text.y = element_text(size = 12, angle = 0), 
+        axis.title = element_text(size = 16)) +
+  scale_y_continuous(limits = c(-5, 15), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
 
-ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/04a_ecto_plot_OS.png", 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/05d_ecto_plot_arousal_OS.png", 
        plot = ecto_plot, 
        device = "png", 
-       height = 90, 
-       width = 150, 
+       height = 110, 
+       width = 185, 
        units = "mm")
 
 ecto_plot

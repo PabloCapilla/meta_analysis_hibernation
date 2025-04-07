@@ -15,7 +15,7 @@ rm(list=ls())
 ##
 
 #renv::init(s)
-renv::restore()
+#renv::restore()
 
 library(openxlsx)
 library(metafor)
@@ -109,7 +109,7 @@ data <- as.data.frame(escalc(measure="SMDH",
 
 ## checking very high SMD values
 data %>% 
-  arrange(desc(SMD)) %>% 
+  arrange(desc(SMDH)) %>% 
   head()
 
 df_check <- data %>% 
