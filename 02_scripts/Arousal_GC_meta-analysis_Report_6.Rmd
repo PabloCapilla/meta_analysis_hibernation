@@ -138,6 +138,12 @@ ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8
        width = 185, 
        units = "mm")
 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/01f_overall_plot_arousal_GC.pdf", 
+       plot = overall_plot, 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
 overall_plot
 ```
 
@@ -245,6 +251,12 @@ thermo_plot <- orchard_plot(object = model_SMD_thermoregulation,
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/03f_thermoregulation_plot_arousal_GC.png", 
        plot = thermo_plot, 
        device = "png", 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/03f_thermoregulation_plot_arousal_GC.pdf", 
+       plot = thermo_plot, 
        height = 110, 
        width = 185, 
        units = "mm")

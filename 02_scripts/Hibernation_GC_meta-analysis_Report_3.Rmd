@@ -129,11 +129,15 @@ overall_plot <- orchard_plot(object = model_SMD,
         axis.title = element_text(size = 16)) +
   scale_y_continuous(limits = c(-10, 8), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
-
-
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/01_hibernation/01c_overall_plot_hibernation_GC.png", 
        plot = overall_plot, 
        device = "png", 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/01_hibernation/01c_overall_plot_hibernation_GC.pdf", 
+       plot = overall_plot, 
        height = 110, 
        width = 185, 
        units = "mm")
@@ -238,10 +242,15 @@ thermo_plot <- orchard_plot(object = model_SMD_thermoregulation,
   scale_y_continuous(limits = c(-10, 8), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
 
-
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/01_hibernation/03c_thermoregulation_plot_GC.png", 
        plot = thermo_plot, 
        device = "png", 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/01_hibernation/03c_thermoregulation_plot_GC.pdf", 
+       plot = thermo_plot, 
        height = 110, 
        width = 185, 
        units = "mm")

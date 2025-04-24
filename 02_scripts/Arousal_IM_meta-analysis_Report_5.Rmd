@@ -137,6 +137,12 @@ ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8
        width = 185, 
        units = "mm")
 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/01e_overall_plot_arousal_IM.pdf", 
+       plot = overall_plot, 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
 overall_plot
 ```
 
@@ -245,6 +251,12 @@ ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8
        width = 185, 
        units = "mm")
 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/02e_biomarker_IM.pdf", 
+       plot = biomarker_plot, 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
 biomarker_plot
 ```
 
@@ -300,13 +312,19 @@ thermo_plot <- orchard_plot(object = model_SMD_arousal_thermoregulation,
   scale_y_continuous(limits = c(-5, 8), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
 
-
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/03e_thermoregulation_plot_IM.png", 
        plot = thermo_plot, 
        device = "png", 
        height = 110, 
        width = 185, 
        units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/03e_thermoregulation_plot_IM.pdf", 
+       plot = thermo_plot, 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
 
 thermo_plot
 ```
@@ -374,10 +392,15 @@ endo_plot <- orchard_plot(object = model_SMD_arousal_endo,
   scale_y_continuous(limits = c(-5, 8), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
 
-
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/04e_endo_plot_arousal_IM.png", 
        plot = endo_plot, 
        device = "png", 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/04e_endo_plot_arousal_IM.pdf", 
+       plot = endo_plot, 
        height = 110, 
        width = 185, 
        units = "mm")
@@ -442,6 +465,12 @@ ecto_plot <- orchard_plot(object = model_SMD_arousal_ecto,
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/05e_ecto_plot_arousal_IM.png", 
        plot = ecto_plot, 
        device = "png", 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/05e_ecto_plot_arousal_IM.pdf", 
+       plot = ecto_plot, 
        height = 110, 
        width = 185, 
        units = "mm")

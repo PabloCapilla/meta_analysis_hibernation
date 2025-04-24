@@ -137,6 +137,12 @@ ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8
        width = 185, 
        units = "mm")
 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/01d_overall_arousal_OS.pdf", 
+       plot = overall_plot, 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
 overall_plot
 ```
 
@@ -237,11 +243,15 @@ biomarker_plot <- orchard_plot(object = model_SMD_biomarker,
         axis.title = element_text(size = 16)) +
   scale_y_continuous(limits = c(-5, 15), breaks = seq(-10,15,5), label = seq(-10,15,5))
 
-
-
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/02d_biomarker_OS.png", 
        plot = biomarker_plot, 
        device = "png", 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/02d_biomarker_OS.pdf", 
+       plot = biomarker_plot, 
        height = 110, 
        width = 185, 
        units = "mm")
@@ -306,6 +316,12 @@ thermo_plot <- orchard_plot(object = model_SMD_thermoregulation,
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/03d_thermoregulation_plot_arousal_OS.png", 
        plot = thermo_plot, 
        device = "png", 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/03d_thermoregulation_plot_arousal_OS.pdf", 
+       plot = thermo_plot, 
        height = 110, 
        width = 185, 
        units = "mm")
@@ -445,6 +461,12 @@ ecto_plot <- orchard_plot(object = model_SMD_ecto,
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/05d_ecto_plot_arousal_OS.png", 
        plot = ecto_plot, 
        device = "png", 
+       height = 110, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/05d_ecto_plot_arousal_OS.pdf", 
+       plot = ecto_plot, 
        height = 110, 
        width = 185, 
        units = "mm")

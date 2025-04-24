@@ -130,12 +130,15 @@ overall_plot <- orchard_plot(object = model_SMD,
         axis.title = element_text(size = 16)) +
         scale_y_continuous(limits = c(-15, 15), breaks = seq(-15,15,5), label = seq(-15,15,5))
 
-
-
-
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/03_aestivation/01h_overall_plot_arousal_estivation_OS.png", 
        plot = overall_plot, 
        device = "png", 
+       height = 120, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/03_aestivation/01h_overall_plot_arousal_estivation_OS.pdf", 
+       plot = overall_plot, 
        height = 120, 
        width = 185, 
        units = "mm")
@@ -243,6 +246,12 @@ biomarker_plot <- orchard_plot(object = model_SMD_biomarker,
 ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/03_aestivation/02h_biomarker_arousal_estivation_OS.png", 
        plot = biomarker_plot, 
        device = "png", 
+       height = 120, 
+       width = 185, 
+       units = "mm")
+
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/03_aestivation/02h_biomarker_arousal_estivation_OS.pdf", 
+       plot = biomarker_plot, 
        height = 120, 
        width = 185, 
        units = "mm")
