@@ -400,6 +400,12 @@ ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8
        width = 150, 
        units = "mm")
 
+ggsave(filename = "C:/Users/pca/Dropbox/PabloCL/2-Work drive/3-Active_projects/8 - Collaborations/Meta-analysis_hibernation/meta_analysis_hibernation/03_plots/02_arousal/04d_endo_plot_arousal_OS.pdf", 
+       plot = endo_plot, 
+       height = 90, 
+       width = 150, 
+       units = "mm")
+
 endo_plot
 ```
 
