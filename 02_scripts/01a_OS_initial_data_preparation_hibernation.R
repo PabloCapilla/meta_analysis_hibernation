@@ -1,6 +1,6 @@
 ###
 ###
-#' Script to prepare data for hibernation meta-analysis
+#' Script to prepare data for hibernation meta-analysis (hibernation effect size)
 #'
 ###
 ###
@@ -18,8 +18,6 @@ library(metafor)
 library(tidyverse)
 library(ggokabeito)
 
-#renv::snapshot()
-
 ##
 ##### data #####
 ##
@@ -30,7 +28,7 @@ library(ggokabeito)
 data <- read.xlsx(
   "./01_data/Hibernation_dataset_4_2_clean.xlsx",
   colNames = T,
-  sheet = 2
+  sheet = 1
 )
 head(data)
 summary(data)
@@ -52,12 +50,16 @@ data <- data |>
 ##
 ##### Descriptive summary of final data and checks to catch errors, typos, etc #####
 ##
+summary(data$Hib_M)
+summary(data$Hib_SD)
+
 summary(data$Euthermia_M)
 summary(data$Euthermia_SD)
 
 table(data$Class)
+table(data$Class_2)
 table(data$Thermoregulation)
-table(data$Biomarker_category)
+table(data$Biomarker_cat_2)
 
 #####
 
@@ -89,8 +91,6 @@ data$Arousal_SD <- ifelse(
 ##
 ##### Calculating meta-analysis y variables #####
 ##
-data$Hib_M
-data$Euthermia_M
 
 ## SMD
 data <- as.data.frame(escalc(
@@ -119,7 +119,6 @@ data <- as.data.frame(escalc(
   n2i = Euthermia_N,
   m2i = Euthermia_M,
   sd2i = Euthermia_SD,
-
   data = data,
   var.names = c("SMDH_arousal", "SMDH.sv_arousal"),
   add.measure = F,
@@ -138,7 +137,7 @@ df_check <- data %>%
   filter(SMDH < -4 | SMDH > 4)
 write.csv(
   x = df_check,
-  file = './01_data/data_check/IM_papers_check_high_low_var.csv'
+  file = './01_data/data_check/OS_papers_check_high_low_var.csv'
 )
 
 ## list of papers with repeated Eu_M values per study and tissue - sent to Pablo B to be checked
@@ -151,15 +150,15 @@ df_eu_rep <- data |>
 
 write.csv(
   x = df_eu_rep,
-  file = './01_data/data_check/IM_papers_check_repeated_Eu_M_SD.csv'
+  file = './01_data/data_check/OS_papers_check_repeated_Eu_M_SD.csv'
 )
 
 ##
 ##
 ##### Save full table #####
 saveRDS(
-  object = data,
-  file = "./01_data/processed_RDS_data_files/02_IM_metaanalysis_full_data.RDS"
+  object = data |> filter(!is.na(SMDH)),
+  file = "./01_data/processed_RDS_data_files/01_OS_metaanalysis_full_data.RDS"
 )
 
 #####
