@@ -1,0 +1,452 @@
+---
+title: "Meta-analysis physiological costs of hibernation: Report 3 - GC Hibernation"
+author: "Pablo Capilla-Lasheras"
+date: "2026-05-04"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+knit: (function(inputFile, encoding) {
+      out_dir <- "../05_reports";
+      rmarkdown::render(inputFile,
+                        encoding=encoding,
+                        output_dir=file.path(dirname(inputFile), out_dir))})
+---
+
+```{r setup, include = FALSE}
+# setup
+knitr::opts_chunk$set(
+  include = TRUE,
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+
+library(here)
+library(orchaRd)
+library(openxlsx)
+library(metafor)
+library(tidyverse)
+library(ggokabeito)
+library(orchaRd)
+library(rmarkdown)
+library(knitr)
+library(kableExtra)
+library(gtsummary)
+library(ggtree)
+```
+
+This [R Markdown](http://rmarkdown.rstudio.com) Notebook contains the initial meta-analysis for the project 'physiological 'costs' of hibernation. Specifically, the meta-analysis of hibernation
+
+## Dataset and calculation of effect sizes
+
+The dataset for this meta-analysis has been collected from the literature and curated by Pablo Burraco, Marko Prokic and Tamara Petrovic. It contains data on physiological effects of hibernation in different systems. Here a quick snapshot of the first lines of the dataset:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+# dataset with raw data
+data <- openxlsx::read.xlsx(
+  here(
+    "./01_data/raw_data/Hibernation_dataset_4_3_hibernation.xlsx"
+  ),
+  colNames = T,
+  sheet = 3
+)
+
+paged_table(data, options = list(rows.print = 20))
+```
+
+As a summary of the *initial dataset*:
+
+- Number of studies: `r length(unique(data$Study_ID))`
+- Number of species: `r length(unique(data$Species))`
+
+For this initial meta-analysis, I am going to include all glucocorticoid (GC) markers and calculate the standarised mean difference (g; with heteroscedastic population variances) as the effect size of analysis comparing **hibernation** *versus* **euthermia**. Positive SMD values indicate higher GC values in *hibernation* while negative SMD indicate lower GC values in hibernation. This is a summary of the effect size calculation based on the dataset above:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+# ES data
+data <- readRDS(
+  here(
+    "./01_data/processed_RDS_data_files/03_GC_metaanalysis_hibernation_full_data.RDS"
+  )
+)
+data$obsID <- 1:nrow(data) # observation ID
+
+data$scientific_name <- gsub(
+  x = data$Species,
+  pattern = "_",
+  replacement = " "
+)
+
+data$scientific_name_phylo <- data$scientific_name
+
+## data for SMD
+df_SMD <- data %>%
+  filter(!is.na(SMDH)) %>%
+  filter(!is.na(SMDH.sv))
+
+# matrix with phylogentic correlations
+phylo_cor <- readRDS(
+  here(
+    "./01_data/processed_RDS_data_files/03_GC_phylogenetic_correlations_hibernation.RDS"
+  )
+)
+
+phylo_tree <- readRDS(
+  here(
+    "./01_data/processed_RDS_data_files/03_GC_phylogenetic_tree_hibernation.RDS"
+  )
+)
+
+tree <- ggtree(phylo_tree, size = 1.2) +
+  xlim_tree(c(0, 35)) +
+  geom_tiplab(
+    aes(
+      label = paste0(
+        "italic('",
+        sub(x = label, pattern = "_", replacement = " "),
+        "')"
+      )
+    ),
+    parse = TRUE,
+    offset = 0.5,
+    size = 5,
+    hjust = 0
+  )
+
+ggsave(
+  filename = here(
+    "./03_plots/01_hibernation/00c_GC_phylo_tree.png"
+  ),
+  plot = tree,
+  device = "png",
+  height = 150,
+  width = 90,
+  units = "mm"
+)
+
+ggsave(
+  filename = here(
+    "./03_plots/01_hibernation/00c_GC_phylo_tree.pdf"
+  ),
+  plot = tree,
+  height = 150,
+  width = 90,
+  units = "mm"
+)
+```
+
+Summary of SMD effect size and number of observations included in the meta-analysis:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+summary(df_SMD$SMDH)
+print(tree)
+```
+
+- Number of observation with non-missing SMD: `r nrow(df_SMD)`
+- Number of studies in the dataset for analysis: `r length(unique(df_SMD$Study_ID))`
+- Number of species in the dataset for analysis: `r length(unique(df_SMD$Species))`
+
+## Initial meta-analysis:
+
+This initial model contains only the intercept and four random effects to account for phylogenetic variation and variation between and within studies beyond sampling variance.
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+## calculate var-cover matrix to control for correlated effect sizes within study and tissue
+V <- vcalc(
+  vi = SMDH.sv,
+  cluster = Study_ID,
+  subgroup = Tissue,
+  grp1 = Hib_M,
+  grp2 = Euthermia_M,
+  w1 = Hib_N,
+  w2 = Euthermia_N,
+  data = df_SMD
+)
+
+# model
+model_SMD <- rma.mv(
+  yi = SMDH,
+  V = V,
+  mods = ~1,
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | Study_ID
+  ),
+  data = df_SMD,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS"),
+  verbose = F
+)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+saveRDS(
+  object = model_SMD,
+  file = here(
+    './04_models/01_hibernation/01c_metamodel_hibernation_GC.RDS'
+  )
+)
+model_SMD <- readRDS(
+  file = here(
+    './04_models/01_hibernation/01c_metamodel_hibernation_GC.RDS'
+  )
+)
+summary(model_SMD)
+i2_SMD <- round(i2_ml(model_SMD), digits = 4) # heterogeneity random effects
+```
+
+Proportion of variation left after accounting for sampling variance and proportion accounted by each random effect:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+knitr::kable(
+  x = data.frame(
+    Variable = names(i2_SMD),
+    i2_value_percentage = as.numeric(round(i2_SMD, digits = 3))
+  )
+) %>%
+  kableExtra::kable_styling(full_width = F)
+```
+
+### Plot of results of intercept-only model:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+overall_plot <- orchard_plot(
+  object = model_SMD,
+  mod = "1",
+  group = 'Study_ID',
+  trunk.size = 1,
+  alpha = 0.2,
+  cb = FALSE,
+  xlab = "Standardised Mean Difference",
+  transfm = "none"
+) +
+  scale_fill_okabe_ito() +
+  scale_color_okabe_ito() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.text.y = element_text(size = 12, angle = 0),
+    axis.title = element_text(size = 16)
+  ) +
+  scale_y_continuous(
+    limits = c(-10, 10),
+    breaks = seq(-10, 10, 5),
+    label = seq(-10, 10, 5)
+  )
+
+overall_plot
+
+ggsave(
+  filename = here(
+    "./03_plots/01_hibernation/01c_overall_plot_hibernation_GC.png"
+  ),
+  plot = overall_plot,
+  device = "png",
+  height = 110,
+  width = 185,
+  units = "mm"
+)
+
+ggsave(
+  filename = here(
+    "./03_plots/01_hibernation/01c_overall_plot_hibernation_GC.pdf"
+  ),
+  plot = overall_plot,
+  height = 110,
+  width = 185,
+  units = "mm"
+)
+```
+
+### Publication bias: small-study effects
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+df_SMD$inv_eff_ss <- (1 / df_SMD$Hib_N) + (1 / df_SMD$Euthermia_N)
+
+model_SMD_pb <- rma.mv(
+  yi = SMDH,
+  V = V,
+  mods = ~ 1 + sqrt(inv_eff_ss),
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | Study_ID
+  ),
+  data = df_SMD,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS"),
+  verbose = F
+)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+saveRDS(
+  object = model_SMD_pb,
+  file = here(
+    './04_models/01_hibernation/06c_pb_metamodel_hibernation_GC.RDS'
+  )
+)
+model_SMD_pb <- readRDS(
+  file = here(
+    './04_models/01_hibernation/06c_pb_metamodel_hibernation_GC.RDS'
+  )
+)
+
+summary(model_SMD_pb)
+```
+
+### Publication bias: time-lag effects
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+df_SMD$year_scl <- scale(df_SMD$Year)
+
+model_SMD_tl <- rma.mv(
+  yi = SMDH,
+  V = V,
+  mods = ~ 1 + year_scl,
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | Study_ID
+  ),
+  data = df_SMD,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS"),
+  verbose = F
+)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+saveRDS(
+  object = model_SMD_tl,
+  file = here(
+    './04_models/01_hibernation/07c_timelag_metamodel_hibernation_GC.RDS'
+  )
+)
+model_SMD_tl <- readRDS(
+  file = here(
+    './04_models/01_hibernation/07c_timelag_metamodel_hibernation_GC.RDS'
+  )
+)
+
+summary(model_SMD_tl)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+results <- mod_results(model_SMD_tl, mod = "year_scl", group = "Study_ID")
+orchaRd::bubble_plot(
+  model_SMD_tl,
+  mod = 'year_scl',
+  group = 'Study_ID',
+  alpha = 0.2,
+  cb = FALSE,
+  xlab = "Year of publication (scaled)",
+  transfm = "none",
+) +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.text.y = element_text(size = 12, angle = 0),
+    axis.title = element_text(size = 16)
+  )
+```
+
+
+## Meta-analysis including thermoregulation type as a moderator:
+
+Number of observations for each type:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+table(df_SMD$Thermoregulation)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+model_SMD_thermoregulation <- rma.mv(
+  yi = SMDH,
+  V = V,
+  mods = ~ Thermoregulation - 1,
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | Study_ID
+  ),
+  data = df_SMD,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS"),
+  verbose = F
+)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+saveRDS(
+  object = model_SMD_thermoregulation,
+  file = here(
+    './04_models/01_hibernation/03c_metareg_thermoregulation_hibernation_GC.RDS'
+  )
+)
+model_SMD_thermoregulation <- readRDS(
+  file = here(
+    './04_models/01_hibernation/03c_metareg_thermoregulation_hibernation_GC.RDS'
+  )
+)
+summary(model_SMD_thermoregulation)
+```
+
+### Plot of results of thermoregulation meta-regression:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+thermo_plot <- orchard_plot(
+  object = model_SMD_thermoregulation,
+  mod = 'Thermoregulation',
+  group = 'Study_ID',
+  trunk.size = 1,
+  alpha = 0.2,
+  cb = FALSE,
+  xlab = "Standardised Mean Difference",
+  transfm = "none"
+) +
+  scale_fill_okabe_ito() +
+  scale_color_okabe_ito() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.text.y = element_text(size = 12, angle = 0),
+    axis.title = element_text(size = 16)
+  ) +
+  scale_y_continuous(
+    limits = c(-10, 10),
+    breaks = seq(-10, 10, 5),
+    label = seq(-10, 10, 5)
+  )
+
+thermo_plot
+
+ggsave(
+  filename = here(
+    "./03_plots/01_hibernation/03c_thermoregulation_plot_GC.png"
+  ),
+  plot = thermo_plot,
+  device = "png",
+  height = 120,
+  width = 185,
+  units = "mm"
+)
+
+ggsave(
+  filename = here(
+    "./03_plots/01_hibernation/03c_thermoregulation_plot_GC.pdf"
+  ),
+  plot = thermo_plot,
+  height = 120,
+  width = 185,
+  units = "mm"
+)
+```
+

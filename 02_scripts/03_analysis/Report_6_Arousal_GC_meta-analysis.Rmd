@@ -1,0 +1,101 @@
+---
+title: "Meta-analysis physiological costs of hibernation: Report 6 - GC Arousal"
+author: "Pablo Capilla-Lasheras"
+date: "2026-05-04"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+knit: (function(inputFile, encoding) {
+      out_dir <- "../05_reports";
+      rmarkdown::render(inputFile,
+                        encoding=encoding,
+                        output_dir=file.path(dirname(inputFile), out_dir))})
+---
+
+```{r setup, include = FALSE}
+# setup
+knitr::opts_chunk$set(
+  include = TRUE,
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+
+library(here)
+library(orchaRd)
+library(openxlsx)
+library(metafor)
+library(tidyverse)
+library(ggokabeito)
+library(orchaRd)
+library(rmarkdown)
+library(knitr)
+library(kableExtra)
+library(gtsummary)
+library(ggtree)
+```
+
+This [R Markdown](http://rmarkdown.rstudio.com) Notebook contains the initial meta-analysis for the project 'physiological 'costs' of hibernation. Specifically, the meta-analysis of arousal.
+
+## Dataset and calculation of effect sizes
+
+The dataset for this meta-analysis has been collected from the literature and curated by Pablo Burraco, Marko Prokic and Tamara Petrovic. It contains data on physiological effects of hibernation in different systems. Here a quick snapshot of the first lines of the dataset:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+# dataset with raw data
+data <- openxlsx::read.xlsx(
+  here(
+    "./01_data/raw_data/Hibernation_dataset_4_3_arousal.xlsx"
+  ),
+  colNames = T,
+  sheet = 3
+)
+
+paged_table(data, options = list(rows.print = 20))
+```
+
+As a summary of the *initial dataset*:
+
+- Number of studies: `r length(unique(data$Study_ID))`
+- Number of species: `r length(unique(data$Species))`
+
+For this initial meta-analysis, I am going to include all immune (IM) markers and calculate the standarised mean difference (g; with heteroscedastic population variances) as the effect size of analysis comparing **arousal** *versus* **euthermia**. Positive SMD values indicate higher OS values in *arousal* while negative SMD indicate lower OS values in arousal. This is a summary of the effect size calculation based on the dataset above:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+# ES data
+data <- readRDS(
+  here(
+    "./01_data/processed_RDS_data_files/06_GC_metaanalysis_arousal_full_data.RDS"
+  )
+)
+data$obsID <- 1:nrow(data) # observation ID
+
+
+data$scientific_name <- gsub(
+  x = data$Species,
+  pattern = "_",
+  replacement = " "
+)
+table(data$scientific_name)
+
+## data for SMD
+df_SMD <- data %>%
+  filter(!is.na(SMDH)) %>%
+  filter(!is.na(SMDH.sv))
+```
+
+Summary of SMD effect size and number of observations included in the meta-analysis:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+summary(df_SMD$SMDH)
+```
+
+- Number of observation with non-missing SMD: `r nrow(df_SMD)`
+- Number of studies in the dataset for analysis: `r length(unique(df_SMD$Study_ID))`
+- Number of species in the dataset for analysis: `r length(unique(df_SMD$Species))`
+
+## Initial meta-analysis:
+
+Only three observations left. No meta-analysis.
