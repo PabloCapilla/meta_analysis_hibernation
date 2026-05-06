@@ -8,13 +8,13 @@ Pablo Burraco, Tamara G Petrović, Pablo Capilla-Lasheras, Marko Prokić. [Link 
 
 - **01_data**:
 
-  - *processed_RDS_data_files*: RDS files produced by [prep'ing script](LINK). These are the data files used in subsequent analyses.
+  - *processed_RDS_data_files*: RDS files produced by [prep'ing script](https://github.com/PabloCapilla/meta_analysis_hibernation/tree/main/02_scripts/01_data_prep). These are the data files used in subsequent analyses.
 
   - *raw_data*: raw datatables to start analysis.
 
 - **02_scripts**:
 
-  - *01_data_prep*: scripts to process (raw data)\[LINK\].
+  - *01_data_prep*: scripts to process [raw data](https://github.com/PabloCapilla/meta_analysis_hibernation/tree/main/01_data/raw_data).
 
   - *02_phylo_cor*: scripts to generate phylogenetic var-covar matrices for phylogenetically-controlled meta-analysis.
 
@@ -36,4 +36,4 @@ Pablo Burraco, Tamara G Petrović, Pablo Capilla-Lasheras, Marko Prokić. [Link 
 
   - *03_aestivation*
 
-- **05_reports**: html files showing content of each (analysis script)\[LINK\].
+- **05_reports**: html files showing content of each [analysis script](https://github.com/PabloCapilla/meta_analysis_hibernation/tree/main/02_scripts/03_analysis)
