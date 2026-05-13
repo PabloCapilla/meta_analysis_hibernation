@@ -25,7 +25,7 @@ library(tidyverse)
 ## study specific data
 ##
 data <- read.xlsx(
-  "./01_data/raw_data/Estivation_dataset_2_0_arousal.xlsx",
+  "./01_data/raw_data/Burraco_et_al_estivation_arousal.xlsx",
   colNames = T,
   sheet = 1
 )

@@ -16,7 +16,6 @@ rm(list = ls())
 library(openxlsx)
 library(metafor)
 library(tidyverse)
-library(ggokabeito)
 
 ##
 ##### data #####
@@ -26,7 +25,7 @@ library(ggokabeito)
 ## study specific data
 ##
 data <- read.xlsx(
-  "./01_data/raw_data/Estivation_dataset_2_0_hibernation.xlsx",
+  "./01_data/raw_data/Burraco_et_al_estivation_hibernation.xlsx",
   colNames = T,
   sheet = 1
 )

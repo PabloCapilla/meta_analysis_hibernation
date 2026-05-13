@@ -58,18 +58,45 @@ if (length(missing_species_column) > 0) {
   )
 }
 
+missing_ref_column <- data_files[
+  !vapply(
+    data_list,
+    function(x) is.data.frame(x) && "Reference" %in% names(x),
+    logical(1)
+  )
+]
+
+if (length(missing_ref_column) > 0) {
+  stop(
+    "These files do not contain a Reference column: ",
+    paste(basename(missing_ref_column), collapse = ", ")
+  )
+}
+
 data <- bind_rows(data_list, .id = "source_file") %>%
   mutate(
     source_file = basename(data_files[as.integer(source_file)])
   ) |>
-  select(Reference, Species)
+  select(StudyID, Species, Reference, source_file)
 
 ## number of studies
 length(unique(data$Reference))
 length(unique(data$Species))
 
+data |>
+  filter(is.na(Reference))
+
+nrow(data)
 head(data)
 str(data)
+
+list_studies <- data |>
+  select(Reference) |>
+  group_by(Reference) |>
+  filter(row_number() == 1) |>
+  arrange(Reference)
+
+write.csv(list_studies, './01_data/list_unique_studies.csv')
 
 ##
 ##### recovering phylogenetic relationship #####
@@ -157,4 +184,11 @@ ggsave(
   width = 125,
   units = "mm"
 )
+
+#####
+
 ##
+##### list of all papers included #####
+##
+data |>
+  distinct(Reference)
