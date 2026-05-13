@@ -47,7 +47,7 @@ The dataset for this meta-analysis has been collected from the literature and cu
 # dataset with raw data
 data <- openxlsx::read.xlsx(
   here(
-    "./01_data/raw_data/Hibernation_dataset_4_3_arousal.xlsx"
+    "./01_data/raw_data/Burraco_et_al_hibernation_arousal.xlsx"
   ),
   colNames = T,
   sheet = 3
@@ -58,7 +58,7 @@ paged_table(data, options = list(rows.print = 20))
 
 As a summary of the *initial dataset*:
 
-- Number of studies: `r length(unique(data$Study_ID))`
+- Number of studies: `r length(unique(data$StudyID))`
 - Number of species: `r length(unique(data$Species))`
 
 For this initial meta-analysis, I am going to include all immune (IM) markers and calculate the standarised mean difference (g; with heteroscedastic population variances) as the effect size of analysis comparing **arousal** *versus* **euthermia**. Positive SMD values indicate higher OS values in *arousal* while negative SMD indicate lower OS values in arousal. This is a summary of the effect size calculation based on the dataset above:
@@ -93,7 +93,7 @@ summary(df_SMD$SMDH)
 ```
 
 - Number of observation with non-missing SMD: `r nrow(df_SMD)`
-- Number of studies in the dataset for analysis: `r length(unique(df_SMD$Study_ID))`
+- Number of studies in the dataset for analysis: `r length(unique(df_SMD$StudyID))`
 - Number of species in the dataset for analysis: `r length(unique(df_SMD$Species))`
 
 ## Initial meta-analysis:

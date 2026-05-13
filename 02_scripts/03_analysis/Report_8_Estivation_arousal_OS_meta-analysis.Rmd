@@ -47,7 +47,7 @@ The dataset for this meta-analysis has been collected from the literature and cu
 # dataset with raw data
 data <- openxlsx::read.xlsx(
   here(
-    "./01_data/raw_data/Estivation_dataset_2_0_arousal.xlsx"
+    "./01_data/raw_data/Burraco_et_al_estivation_arousal.xlsx"
   ),
   colNames = T,
   sheet = 1
@@ -58,7 +58,7 @@ paged_table(data, options = list(rows.print = 20))
 
 As a summary of the *initial dataset*:
 
-- Number of studies: `r length(unique(data$Study_ID))`
+- Number of studies: `r length(unique(data$StudyID))`
 - Number of species: `r length(unique(data$Species))`
 
 For this initial meta-analysis, I am going to include all oxidative stress (OS) markers and calculate the standarised mean difference (g; with heteroscedastic population variances) as the effect size of analysis comparing **arousal after aestivation** *versus* **euthermia**. Positive SMD values indicate higher OS values in *arousal* while negative SMD indicate lower OS values in arousal. This is a summary of the effect size calculation based on the dataset above:
@@ -145,7 +145,7 @@ print(tree)
 ```
 
 - Number of observation with non-missing SMD: `r nrow(df_SMD)`
-- Number of studies in the dataset for analysis: `r length(unique(df_SMD$Study_ID))`
+- Number of studies in the dataset for analysis: `r length(unique(df_SMD$StudyID))`
 - Number of species in the dataset for analysis: `r length(unique(df_SMD$Species))`
 
 ## Initial meta-analysis:
@@ -156,7 +156,7 @@ This initial model contains only the intercept and four random effects to accoun
 ## calculate var-cover matrix to control for correlated effect sizes within study and tissue
 V <- vcalc(
   vi = SMDH.sv,
-  cluster = Study_ID,
+  cluster = StudyID,
   subgroup = Tissue,
   grp1 = Arousal_M,
   grp2 = Euthermia_M,
@@ -174,7 +174,7 @@ model_SMD <- rma.mv(
     ~ 1 | scientific_name_phylo,
     ~ 1 | Species,
     ~ 1 | obsID,
-    ~ 1 | Study_ID
+    ~ 1 | StudyID
   ),
   data = df_SMD,
   R = list(scientific_name_phylo = phylo_cor),
@@ -218,7 +218,7 @@ knitr::kable(
 overall_plot <- orchard_plot(
   object = model_SMD,
   mod = "1",
-  group = 'Study_ID',
+  group = 'StudyID',
   trunk.size = 1,
   alpha = 0.2,
   cb = FALSE,
@@ -275,7 +275,7 @@ model_SMD_pb <- rma.mv(
     ~ 1 | scientific_name_phylo,
     ~ 1 | Species,
     ~ 1 | obsID,
-    ~ 1 | Study_ID
+    ~ 1 | StudyID
   ),
   data = df_SMD,
   R = list(scientific_name_phylo = phylo_cor),
@@ -314,7 +314,7 @@ model_SMD_tl <- rma.mv(
     ~ 1 | scientific_name_phylo,
     ~ 1 | Species,
     ~ 1 | obsID,
-    ~ 1 | Study_ID
+    ~ 1 | StudyID
   ),
   data = df_SMD,
   R = list(scientific_name_phylo = phylo_cor),
@@ -343,11 +343,11 @@ summary(model_SMD_tl)
 The results above suggest some degree of time-lag bias. 
 
 ```{r echo = TRUE, eval = TRUE, include = TRUE}
-results <- mod_results(model_SMD_tl, mod = "year_scl", group = "Study_ID")
+results <- mod_results(model_SMD_tl, mod = "year_scl", group = "StudyID")
 time_bias <- orchaRd::bubble_plot(
   model_SMD_tl,
   mod = 'year_scl',
-  group = 'Study_ID',
+  group = 'StudyID',
   alpha = 0.2,
   cb = FALSE,
   xlab = "Year of publication (scaled)",
@@ -399,7 +399,7 @@ model_SMD_biomarker <- rma.mv(
     ~ 1 | scientific_name_phylo,
     ~ 1 | Species,
     ~ 1 | obsID,
-    ~ 1 | Study_ID
+    ~ 1 | StudyID
   ),
   data = df_SMD,
   R = list(scientific_name_phylo = phylo_cor),
@@ -430,7 +430,7 @@ summary(model_SMD_biomarker)
 biomarker_plot <- orchard_plot(
   object = model_SMD_biomarker,
   mod = 'Biomarker_cat_2',
-  group = 'Study_ID',
+  group = 'StudyID',
   trunk.size = 1,
   alpha = 0.2,
   cb = FALSE,
