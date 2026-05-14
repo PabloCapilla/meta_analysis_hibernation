@@ -35,6 +35,8 @@ library(knitr)
 library(kableExtra)
 library(gtsummary)
 library(ggtree)
+
+rm(list = ls())
 ```
 
 This [R Markdown](http://rmarkdown.rstudio.com) Notebook contains the initial meta-analysis for the project 'physiological 'costs' of hibernation. Specifically, the meta-analysis of arousal.
@@ -183,9 +185,11 @@ model_SMD <- rma.mv(
   data = df_SMD,
   R = list(scientific_name_phylo = phylo_cor),
   method = "REML",
-  control = list(optimizer = "BFGS"),
+  control = list(optimizer = "BFGS", nearpd = TRUE),
   verbose = F
 )
+
+# I inspected the "'V' appears to be not positive definite warning" and it seems to be due to small numerical tolerance, but not due to a major problem in the V matrix
 ```
 
 ```{r echo = TRUE, eval = TRUE, include = TRUE}
@@ -227,7 +231,8 @@ overall_plot <- orchard_plot(
   alpha = 0.2,
   cb = FALSE,
   xlab = "Standardised Mean Difference",
-  transfm = "none"
+  transfm = "none",
+  k.pos = 5
 ) +
   scale_fill_okabe_ito() +
   scale_color_okabe_ito() +
@@ -282,7 +287,7 @@ model_SMD_pb <- rma.mv(
     ~ 1 | StudyID
   ),
   data = df_SMD,
-  R = list(scientific_name_phylo = phylo_cor),
+  R = list(scientific_name_phylo = phylo_cor, nearpd = TRUE),
   method = "REML",
   control = list(optimizer = "BFGS"),
   verbose = F
@@ -323,7 +328,7 @@ model_SMD_tl <- rma.mv(
   data = df_SMD,
   R = list(scientific_name_phylo = phylo_cor),
   method = "REML",
-  control = list(optimizer = "BFGS"),
+  control = list(optimizer = "BFGS", nearpd = TRUE),
   verbose = F
 )
 ```
@@ -384,7 +389,7 @@ model_SMD_biomarker <- rma.mv(
   data = df_SMD,
   R = list(scientific_name_phylo = phylo_cor),
   method = "REML",
-  control = list(optimizer = "BFGS"),
+  control = list(optimizer = "BFGS", nearpd = TRUE),
   verbose = F
 )
 ```
@@ -411,6 +416,7 @@ biomarker_plot <- orchard_plot(
   object = model_SMD_biomarker,
   mod = 'Biomarker_cat_2',
   group = 'StudyID',
+  k.pos = 5,
   trunk.size = 1,
   alpha = 0.2,
   cb = FALSE,
@@ -476,7 +482,7 @@ model_SMD_thermoregulation <- rma.mv(
   data = df_SMD,
   R = list(scientific_name_phylo = phylo_cor),
   method = "REML",
-  control = list(optimizer = "BFGS"),
+  control = list(optimizer = "BFGS", nearpd = TRUE),
   verbose = F
 )
 ```
@@ -503,6 +509,7 @@ thermo_plot <- orchard_plot(
   object = model_SMD_thermoregulation,
   mod = 'Thermoregulation',
   group = 'StudyID',
+  k.pos = 5,
   trunk.size = 1,
   alpha = 0.2,
   cb = FALSE,
@@ -594,7 +601,7 @@ model_SMD_endo <- rma.mv(
   data = df_SMD_endo,
   R = list(scientific_name_phylo = phylo_cor),
   method = "REML",
-  control = list(optimizer = "BFGS"),
+  control = list(optimizer = "BFGS", nearpd = TRUE),
   verbose = F
 )
 ```
@@ -670,10 +677,102 @@ df_SMD_ecto <- df_SMD %>%
   filter(!is.na(SMDH)) %>%
   filter(!is.na(SMDH.sv)) %>%
   filter(Thermoregulation == 'Ectothermic')
+
+## calculate var-cover matrix to control for correlated effect sizes within study and tissue
+V_ecto <- vcalc(
+  vi = SMDH.sv,
+  cluster = StudyID,
+  subgroup = Tissue,
+  grp1 = Arousal_M,
+  grp2 = Euthermia_M,
+  w1 = Arousal_N,
+  w2 = Euthermia_N,
+  data = df_SMD_ecto
+)
 ```
 
 - Number of observation with non-missing SMD: `r nrow(df_SMD_ecto)`
 - Number of studies in the dataset for analysis: `r length(unique(df_SMD_ecto$StudyID))`
 - Number of species in the dataset for analysis: `r length(unique(df_SMD_ecto$Species))`
 
-Not enough data to run this model.
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+model_SMD_ecto <- rma.mv(
+  yi = SMDH,
+  V = V_ecto,
+  mods = ~ Biomarker_cat_2 - 1,
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | StudyID
+  ),
+  data = df_SMD_ecto,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS", nearpd = TRUE),
+  verbose = F
+)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+saveRDS(
+  object = model_SMD_ecto,
+  file = here(
+    './04_models/02_arousal/05a_metareg_hibernation_ecto_OS.RDS'
+  )
+)
+model_SMD_ecto <- readRDS(
+  file = here(
+    './04_models/02_arousal/05a_metareg_hibernation_ecto_OS.RDS'
+  )
+)
+summary(model_SMD_ecto)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+ecto_plot <- orchard_plot(
+  object = model_SMD_ecto,
+  mod = 'Biomarker_cat_2',
+  group = 'StudyID',
+  trunk.size = 1,
+  alpha = 0.2,
+  cb = FALSE,
+  xlab = "Standardised Mean Difference",
+  transfm = "none"
+) +
+  scale_fill_okabe_ito() +
+  scale_color_okabe_ito() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.text.y = element_text(size = 12, angle = 0),
+    axis.title = element_text(size = 16)
+  ) +
+  scale_y_continuous(
+    limits = c(-10, 10),
+    breaks = seq(-10, 10, 5),
+    label = seq(-10, 10, 5)
+  )
+
+ecto_plot
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/05a_ecto_plot_OS.png"
+  ),
+  plot = endo_plot,
+  device = "png",
+  height = 120,
+  width = 185,
+  units = "mm"
+)
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/05a_ecto_plot_OS.pdf"
+  ),
+  plot = endo_plot,
+  height = 120,
+  width = 185,
+  units = "mm"
+)
+```

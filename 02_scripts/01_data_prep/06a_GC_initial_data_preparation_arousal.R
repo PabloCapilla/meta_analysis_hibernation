@@ -63,7 +63,7 @@ data$Euthermia_SD <- ifelse(
 
 data$Arousal_SD <- ifelse(
   is.na(data$Arousal_SD),
-  data$Hib_SE * sqrt(data$Arousal_N),
+  data$Arousal_SE * sqrt(data$Arousal_N),
   data$Arousal_SD
 )
 

@@ -35,6 +35,8 @@ library(knitr)
 library(kableExtra)
 library(gtsummary)
 library(ggtree)
+
+rm(list = ls())
 ```
 
 This [R Markdown](http://rmarkdown.rstudio.com) Notebook contains the initial meta-analysis for the project 'physiological 'costs' of hibernation. Specifically, the meta-analysis of arousal.
@@ -78,18 +80,70 @@ data$scientific_name <- gsub(
   pattern = "_",
   replacement = " "
 )
-table(data$scientific_name)
+
+data$scientific_name_phylo <- data$scientific_name
 
 ## data for SMD
 df_SMD <- data %>%
   filter(!is.na(SMDH)) %>%
   filter(!is.na(SMDH.sv))
+
+# matrix with phylogentic correlations
+phylo_cor <- readRDS(
+  here(
+    "./01_data/processed_RDS_data_files/06_GC_phylogenetic_correlations_arousal.RDS"
+  )
+)
+
+phylo_tree <- readRDS(
+  here(
+    "./01_data/processed_RDS_data_files/06_GC_phylogenetic_tree_arousal.RDS"
+  )
+)
+
+tree <- ggtree(phylo_tree, size = 1.2) +
+  xlim_tree(c(0, 35)) +
+  geom_tiplab(
+    aes(
+      label = paste0(
+        "italic('",
+        sub(x = label, pattern = "_", replacement = " "),
+        "')"
+      )
+    ),
+    parse = TRUE,
+    offset = 0.5,
+    size = 5,
+    hjust = 0
+  )
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/00c_GC_phylo_tree_arousal.png"
+  ),
+  plot = tree,
+  device = "png",
+  height = 150,
+  width = 90,
+  units = "mm"
+)
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/00c_GC_phylo_tree_arousal.pdf"
+  ),
+  plot = tree,
+  height = 150,
+  width = 90,
+  units = "mm"
+)
 ```
 
 Summary of SMD effect size and number of observations included in the meta-analysis:
 
 ```{r echo = TRUE, eval = TRUE, include = TRUE}
 summary(df_SMD$SMDH)
+print(tree)
 ```
 
 - Number of observation with non-missing SMD: `r nrow(df_SMD)`
@@ -98,4 +152,303 @@ summary(df_SMD$SMDH)
 
 ## Initial meta-analysis:
 
-Only three observations left. No meta-analysis.
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+## calculate var-cover matrix to control for correlated effect sizes within study and tissue
+V <- vcalc(
+  vi = SMDH.sv,
+  cluster = StudyID,
+  subgroup = Tissue,
+  grp1 = Arousal_M,
+  grp2 = Euthermia_M,
+  w1 = Arousal_N,
+  w2 = Euthermia_N,
+  data = df_SMD
+)
+
+# model
+model_SMD <- rma.mv(
+  yi = SMDH,
+  V = V,
+  mods = ~1,
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | StudyID
+  ),
+  data = df_SMD,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS"),
+  verbose = F
+)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+saveRDS(
+  object = model_SMD,
+  file = here(
+    './04_models/02_arousal/01c_metamodel_hibernation_GC.RDS'
+  )
+)
+model_SMD <- readRDS(
+  file = here(
+    './04_models/02_arousal/01c_metamodel_hibernation_GC.RDS'
+  )
+)
+summary(model_SMD)
+i2_SMD <- round(i2_ml(model_SMD), digits = 4) # heterogeneity random effects
+```
+
+Proportion of variation left after accounting for sampling variance and proportion accounted by each random effect:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+knitr::kable(
+  x = data.frame(
+    Variable = names(i2_SMD),
+    i2_value_percentage = as.numeric(round(i2_SMD, digits = 3))
+  )
+) %>%
+  kableExtra::kable_styling(full_width = F)
+```
+
+### Plot of results of intercept-only model:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+overall_plot <- orchard_plot(
+  object = model_SMD,
+  mod = "1",
+  group = 'StudyID',
+  k.pos = 2,
+  trunk.size = 1,
+  alpha = 0.2,
+  cb = FALSE,
+  xlab = "Standardised Mean Difference",
+  transfm = "none"
+) +
+  scale_fill_okabe_ito() +
+  scale_color_okabe_ito() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.text.y = element_text(size = 12, angle = 0),
+    axis.title = element_text(size = 16)
+  ) +
+  scale_y_continuous(
+    limits = c(-3, 3),
+    breaks = seq(-3, 3, 1),
+    label = seq(-3, 3, 1)
+  )
+
+overall_plot
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/01c_overall_plot_hibernation_GC.png"
+  ),
+  plot = overall_plot,
+  device = "png",
+  height = 110,
+  width = 185,
+  units = "mm"
+)
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/01c_overall_plot_hibernation_GC.pdf"
+  ),
+  plot = overall_plot,
+  height = 110,
+  width = 185,
+  units = "mm"
+)
+```
+
+### Publication bias: small-study effects
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+df_SMD$inv_eff_ss <- (1 / df_SMD$Arousal_N) + (1 / df_SMD$Euthermia_N)
+
+model_SMD_pb <- rma.mv(
+  yi = SMDH,
+  V = V,
+  mods = ~ 1 + sqrt(inv_eff_ss),
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | StudyID
+  ),
+  data = df_SMD,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS"),
+  verbose = F
+)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+saveRDS(
+  object = model_SMD_pb,
+  file = here(
+    './04_models/02_arousal/06c_pb_metamodel_hibernation_GC.RDS'
+  )
+)
+model_SMD_pb <- readRDS(
+  file = here(
+    './04_models/02_arousal/06c_pb_metamodel_hibernation_GC.RDS'
+  )
+)
+
+summary(model_SMD_pb)
+```
+
+### Publication bias: time-lag effects
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+df_SMD$year_scl <- scale(df_SMD$Year)
+
+model_SMD_tl <- rma.mv(
+  yi = SMDH,
+  V = V,
+  mods = ~ 1 + year_scl,
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | StudyID
+  ),
+  data = df_SMD,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS"),
+  verbose = F
+)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+saveRDS(
+  object = model_SMD_tl,
+  file = here(
+    './04_models/02_arousal/07c_timelag_metamodel_hibernation_GC.RDS'
+  )
+)
+model_SMD_tl <- readRDS(
+  file = here(
+    './04_models/02_arousal/07c_timelag_metamodel_hibernation_GC.RDS'
+  )
+)
+
+summary(model_SMD_tl)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+results <- mod_results(model_SMD_tl, mod = "year_scl", group = "StudyID")
+orchaRd::bubble_plot(
+  model_SMD_tl,
+  mod = 'year_scl',
+  group = 'StudyID',
+  alpha = 0.2,
+  cb = FALSE,
+  xlab = "Year of publication (scaled)",
+  transfm = "none",
+) +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.text.y = element_text(size = 12, angle = 0),
+    axis.title = element_text(size = 16)
+  )
+```
+
+## Meta-analysis including thermoregulation type as a moderator:
+
+Number of observations for each type:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+table(df_SMD$Thermoregulation)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+model_SMD_thermoregulation <- rma.mv(
+  yi = SMDH,
+  V = V,
+  mods = ~ Thermoregulation - 1,
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | StudyID
+  ),
+  data = df_SMD,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS", nearpd = TRUE),
+  verbose = F
+)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+saveRDS(
+  object = model_SMD_thermoregulation,
+  file = here(
+    './04_models/02_arousal/03c_metareg_thermoregulation_hibernation_GC.RDS'
+  )
+)
+model_SMD_thermoregulation <- readRDS(
+  file = here(
+    './04_models/02_arousal/03c_metareg_thermoregulation_hibernation_GC.RDS'
+  )
+)
+summary(model_SMD_thermoregulation)
+```
+
+### Plot of results of thermoregulation meta-regression:
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+thermo_plot <- orchard_plot(
+  object = model_SMD_thermoregulation,
+  mod = 'Thermoregulation',
+  group = 'StudyID',
+  k.pos = 5,
+  trunk.size = 1,
+  alpha = 0.2,
+  cb = FALSE,
+  xlab = "Standardised Mean Difference",
+  transfm = "none"
+) +
+  scale_fill_okabe_ito() +
+  scale_color_okabe_ito() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.text.y = element_text(size = 12, angle = 0),
+    axis.title = element_text(size = 16)
+  ) +
+  scale_y_continuous(
+    limits = c(-10, 10),
+    breaks = seq(-10, 10, 5),
+    label = seq(-10, 10, 5)
+  )
+
+thermo_plot
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/03c_thermoregulation_plot_GC.png"
+  ),
+  plot = thermo_plot,
+  device = "png",
+  height = 120,
+  width = 185,
+  units = "mm"
+)
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/03c_thermoregulation_plot_GC.pdf"
+  ),
+  plot = thermo_plot,
+  height = 120,
+  width = 185,
+  units = "mm"
+)
+```
+
