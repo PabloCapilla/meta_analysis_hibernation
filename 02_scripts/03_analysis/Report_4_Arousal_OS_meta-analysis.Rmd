@@ -1,7 +1,7 @@
 ---
 title: "Meta-analysis physiological costs of hibernation: Report 4 - OS Arousal"
 author: "Pablo Capilla-Lasheras"
-date: "2026-05-04"
+date: "2026-05-22"
 output:
   html_document:
     df_print: paged
@@ -630,7 +630,8 @@ endo_plot <- orchard_plot(
   alpha = 0.2,
   cb = FALSE,
   xlab = "Standardised Mean Difference",
-  transfm = "none"
+  transfm = "none",
+  k.pos = 5
 ) +
   scale_fill_okabe_ito() +
   scale_color_okabe_ito() +
@@ -738,7 +739,8 @@ ecto_plot <- orchard_plot(
   alpha = 0.2,
   cb = FALSE,
   xlab = "Standardised Mean Difference",
-  transfm = "none"
+  transfm = "none",
+  k.pos = 5
 ) +
   scale_fill_okabe_ito() +
   scale_color_okabe_ito() +
@@ -759,7 +761,7 @@ ggsave(
   filename = here(
     "./03_plots/02_arousal/05a_ecto_plot_OS.png"
   ),
-  plot = endo_plot,
+  plot = ecto_plot,
   device = "png",
   height = 120,
   width = 185,
@@ -770,7 +772,7 @@ ggsave(
   filename = here(
     "./03_plots/02_arousal/05a_ecto_plot_OS.pdf"
   ),
-  plot = endo_plot,
+  plot = ecto_plot,
   height = 120,
   width = 185,
   units = "mm"
