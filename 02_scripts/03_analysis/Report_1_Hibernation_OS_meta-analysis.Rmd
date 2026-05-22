@@ -1,7 +1,7 @@
 ---
 title: "Meta-analysis physiological costs of hibernation: Report 1 - OS Hibernation"
 author: "Pablo Capilla-Lasheras"
-date: "2026-05-04"
+date: "2026-05-22"
 output:
   html_document:
     df_print: paged

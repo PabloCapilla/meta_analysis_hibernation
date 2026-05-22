@@ -551,7 +551,7 @@ ggsave(
 Now, we investigate if the response to hibernation varies across biomarkers of oxidative stress for endotherms and ectotherms. We include four markers:
 
 ```{r echo = TRUE, eval = TRUE, include = TRUE}
-table(df_SMD$Biomarker_cat_2)
+table(df_SMD$Thermoregulation)
 ```
 
 ### Meta-model for endotherms:
@@ -670,22 +670,74 @@ df_SMD_ecto <- df_SMD %>%
   filter(!is.na(SMDH)) %>%
   filter(!is.na(SMDH.sv)) %>%
   filter(Thermoregulation == 'Ectothermic')
-
-## calculate var-cover matrix to control for correlated effect sizes within study and tissue
-V_ecto <- vcalc(
-  vi = SMDH.sv,
-  cluster = StudyID,
-  subgroup = Tissue,
-  grp1 = Arousal_M,
-  grp2 = Euthermia_M,
-  w1 = Arousal_N,
-  w2 = Euthermia_N,
-  data = df_SMD_ecto
-)
 ```
 
 - Number of observation with non-missing SMD: `r nrow(df_SMD_ecto)`
 - Number of studies in the dataset for analysis: `r length(unique(df_SMD_ecto$StudyID))`
 - Number of species in the dataset for analysis: `r length(unique(df_SMD_ecto$Species))`
 
-Only one study in ectotherms dataset. Analysis not run.s
+Only one study in ectotherms dataset. Analysis run to produce plot, but interpretation needs to be cautions.
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+table(df_SMD_ecto$Biomarker_category)
+
+model_SMD_ecto <- rma.mv(
+  yi = SMDH,
+  V = SMDH.sv,
+  mods = ~ Biomarker_category - 1,
+  data = df_SMD_ecto,
+  method = "REML",
+  control = list(optimizer = "BFGS"),
+  verbose = F
+)
+summary(model_SMD_ecto)
+```
+
+```{r echo = TRUE, eval = TRUE, include = TRUE}
+ecto_plot <- orchard_plot(
+  object = model_SMD_ecto,
+  mod = 'Biomarker_category',
+  group = 'StudyID',
+  trunk.size = 1,
+  alpha = 0.2,
+  cb = FALSE,
+  xlab = "Standardised Mean Difference",
+  transfm = "none",
+  k.pos = 0.5
+) +
+  scale_fill_okabe_ito() +
+  scale_color_okabe_ito() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.text.y = element_text(size = 12, angle = 0),
+    axis.title = element_text(size = 16)
+  ) +
+  scale_y_continuous(
+    limits = c(-1, 1),
+    breaks = seq(-1, 1, 0.5),
+    label = seq(-1, 1, 0.5)
+  )
+
+ecto_plot
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/05b_endo_plot_IM.png"
+  ),
+  plot = ecto_plot,
+  device = "png",
+  height = 120,
+  width = 185,
+  units = "mm"
+)
+
+ggsave(
+  filename = here(
+    "./03_plots/02_arousal/05b_endo_plot_IM.pdf"
+  ),
+  plot = ecto_plot,
+  height = 120,
+  width = 185,
+  units = "mm"
+)
+```
