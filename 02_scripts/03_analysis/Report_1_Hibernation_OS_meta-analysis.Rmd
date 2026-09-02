@@ -628,6 +628,26 @@ model_SMD_endo <- rma.mv(
   control = list(optimizer = "BFGS"),
   verbose = F
 )
+
+# model correcting for time-lag effects
+model_SMD_endo_year <- rma.mv(
+  yi = SMDH,
+  V = V_endo,
+  mods = ~ year_scl + Biomarker_cat_2 - 1,
+  random = list(
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID,
+    ~ 1 | StudyID
+  ),
+  data = df_SMD_endo,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML",
+  control = list(optimizer = "BFGS"),
+  verbose = F
+)
+
+summary(model_SMD_endo_year)
 ```
 
 ```{r echo = TRUE, eval = TRUE, include = TRUE}
@@ -735,6 +755,24 @@ model_SMD_ecto <- rma.mv(
   R = list(scientific_name_phylo = phylo_cor),
   method = "REML"
 )
+
+# model correcting for time-lag effects
+model_SMD_ecto_year <- rma.mv(
+  yi = SMDH,
+  V = V_ecto,
+  mods = ~ year_scl + Biomarker_cat_2 - 1,
+  random = list(
+    ~ 1 | StudyID,
+    ~ 1 | scientific_name_phylo,
+    ~ 1 | Species,
+    ~ 1 | obsID
+  ),
+  data = df_SMD_ecto,
+  R = list(scientific_name_phylo = phylo_cor),
+  method = "REML"
+)
+
+summary(model_SMD_ecto_year)
 ```
 
 ```{r echo = TRUE, eval = TRUE, include = TRUE}

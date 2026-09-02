@@ -1,7 +1,7 @@
 ---
 title: "Meta-analysis physiological costs of hibernation: Report 2 - IM Hibernation"
 author: "Pablo Capilla-Lasheras"
-date: "2026-05-04"
+date: "2026-09-02"
 output:
   html_document:
     df_print: paged
@@ -116,7 +116,7 @@ tree <- ggtree(phylo_tree, size = 1.2) +
     ),
     parse = TRUE,
     offset = 0.5,
-    size = 5,
+    linewidth = 5,
     hjust = 0
   )
 
@@ -399,7 +399,7 @@ table(df_SMD$Biomarker_cat_2)
 model_SMD_biomarker <- rma.mv(
   yi = SMDH,
   V = V,
-  mods = ~ Biomarker_category - 1,
+  mods = ~ year_scl + Biomarker_category - 1,
   random = list(
     ~ 1 | scientific_name_phylo,
     ~ 1 | Species,
