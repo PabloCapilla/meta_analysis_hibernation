@@ -116,7 +116,7 @@ tree <- ggtree(phylo_tree, size = 1.2) +
     ),
     parse = TRUE,
     offset = 0.5,
-    size = 5,
+    linewidth = 5,
     hjust = 0
   )
 
