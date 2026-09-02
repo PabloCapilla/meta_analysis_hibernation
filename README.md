@@ -1,4 +1,7 @@
-[![https://img.shields.io/badge/zenodo-10.5281/zenodo.22255960-blue?logo=zenodo)]](https://doi.org/10.5281/zenodo.22255960) 
+[![https://zenodo.org/badge/doi/10.5281/zenodo.22255960.svg]](https://doi.org/10.5281/zenodo.22255960) 
+
+
+
 
 # Data and code repository for:
 
