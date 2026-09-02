@@ -7,7 +7,9 @@
 
 **Effects of animal dormancy on oxidative stress, immune status, and glucocorticoids: a meta-analysis**
 
-Pablo Burraco, Tamara G Petrović, Pablo Capilla-Lasheras, Marko Prokić. [Link to bioRxiv](https://www.biorxiv.org/content/10.1101/2025.10.02.680078v1.full.pdf)
+Pablo Burraco, Tamara G Petrović, Pablo Capilla-Lasheras, Marko Prokić. [![DOI:10.1101/2025.10.02.680078v1.full](http://img.shields.io/badge/DOI-10.1101/2025.10.02.680078v1.full.svg)](https://doi.org/10.1101/2025.10.02.680078v1.full) 
+
+
 
 # Repositoty structure:
 
