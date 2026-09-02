@@ -1,16 +1,10 @@
 ![https://zenodo.org/badge/doi/10.5281/zenodo.22255960.svg](https://zenodo.org/badge/doi/10.5281/zenodo.22255960.svg)
 
-
-
-
 # Data and code repository for:
 
 **Effects of animal dormancy on oxidative stress, immune status, and glucocorticoids: a meta-analysis**
 
-Pablo Burraco, Tamara G Petrović, Pablo Capilla-Lasheras, Marko Prokić. [![DOI:10.1101/2025.10.02.680078](http://img.shields.io/badge/DOI-10.1101/2025.10.02.680078.svg)](https://doi.org/10.1101/2025.10.02.680078
-) 
-
-
+Pablo Burraco, Tamara G Petrović, Pablo Capilla-Lasheras, Marko Prokić. [LINK to BioRxiv](https://doi.org/10.1101/2025.10.02.680078)
 
 
 # Repositoty structure:
